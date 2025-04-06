@@ -1,0 +1,294 @@
+{% extends "authentication/auth_base.html" %}
+{% block title %}Login{% endblock title %}
+{% block authbody %}
+
+<style>
+  /* Center the form section with background */
+  .login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    transition: opacity 0.3s ease;
+  }
+
+  /* Hide overlay */
+  .hidden-overlay {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* Background section */
+  .login-background {
+    position: absolute;
+    width: 90%;
+    max-width: 400px;
+    height: 80%;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    z-index: 1;
+  }
+
+  /* Glassmorphism Card (Form) */
+  .login-card {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(12px);
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.25);
+    max-width: 360px;
+    width: 100%;
+    z-index: 2;
+    position: relative;
+    text-align: center;
+    opacity: 1;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  /* Hide login form smoothly */
+  .hidden {
+    opacity: 0;
+    transform: scale(0.8);
+    pointer-events: none;
+  }
+
+  .login-card h3 {
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 15px;
+  }
+
+  /* Form Inputs */
+  .form-group {
+    position: relative;
+    margin-bottom: 18px;
+    text-align: left;
+  }
+
+  .form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-size: 14px;
+  }
+
+  .form-group label {
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+    transition: 0.3s ease-in-out;
+  }
+
+  .form-group input:focus + label,
+  .form-group input:not(:placeholder-shown) + label {
+    top: 5px;
+    font-size: 12px;
+    color: #fff;
+  }
+
+  /* Close Button (Cross Bar) */
+  .close-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 22px;
+    color: white;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.3s ease;
+  }
+
+  .close-btn:hover {
+    background: rgba(255, 255, 255, 0.5);
+  }
+
+  /* Login Button */
+  .btn-login {
+    width: 100%;
+    background: #4caf50;
+    color: #fff;
+    padding: 12px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    transition: 0.3s;
+    cursor: pointer;
+  }
+
+  .btn-login:hover {
+    background: #45a049;
+  }
+
+  /* Forgot Password & Signup Links */
+  .extra-links {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    font-size: 14px;
+  }
+
+  .extra-links a {
+    color: #fff;
+    text-decoration: none;
+  }
+
+  .extra-links a:hover {
+    text-decoration: underline;
+  }
+
+  /* Validation Message */
+  .validation-message {
+    color: #ff6f61;
+    margin-top: 10px;
+    font-size: 14px;
+    text-align: left;
+  }
+
+  .alert {
+    margin-top: 10px;
+  }
+
+  .alert-dismissible .btn-close {
+    color: #ff6f61;
+    opacity: 1;
+  }
+</style>
+
+<div class="login-container" id="loginContainer">
+  <div class="login-background"></div> <!-- Background section -->
+  <div class="login-card" id="loginCard">
+    <!-- Close Button -->
+    <button class="close-btn" id="closeLogin" aria-label="Close login modal">&times;</button>
+
+    <h3>Login</h3>
+    <p class="text-light">Welcome back! Please log in.</p>
+
+    <div id="validationMessages">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show validation-message" role="alert">
+          <strong></strong>{{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    </div>
+
+    <form id="loginForm" action="javascript:void(0);">
+      {% csrf_token %}
+      <!-- Email Field -->
+      <div class="form-group">
+        <input type="email" name="email" id="email" required placeholder=" " />
+        <label>Your Email</label>
+      </div>
+
+      <!-- Password Field -->
+      <div class="form-group">
+        <input type="password" id="password" name="password" required placeholder=" " />
+        <label>Password</label>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn-login">Login</button>
+
+      <!-- Forgot Password & Signup Links -->
+      <div class="extra-links">
+        <a href="{% url 'request-reset-email' %}">Forgot Password?</a>
+        <a href="/auth/signup">Sign Up</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Bootstrap Toast Notification -->
+<div class="toast-container position-fixed top-0 end-0 p-3">
+  <div id="successToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body">
+        Login Successful! Redirecting...
+      </div>
+      <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript for AJAX Login -->
+<script>
+  document.getElementById("loginForm").addEventListener("submit", function(event) {
+    event.preventDefault(); // Prevent default form submission
+
+    let email = document.getElementById("email").value.trim();
+    let password = document.getElementById("password").value.trim();
+    let validationMessages = document.getElementById("validationMessages");
+
+    validationMessages.innerHTML = ""; // Clear previous messages
+
+    // Email validation regex
+    let emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+
+    // Client-side validation
+    if (!emailRegex.test(email)) {
+      validationMessages.innerHTML = "<div class='alert alert-danger'>Please enter a valid email address.</div>";
+      return;
+    }
+
+    if (password.length < 6) {
+      validationMessages.innerHTML = "<div class='alert alert-danger'>Password must be at least 6 characters long.</div>";
+      return;
+    }
+
+    let csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+    // Send AJAX request
+    fetch("/auth/login/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrfToken // CSRF token for security
+      },
+      body: JSON.stringify({ email: email, password: password })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Show Bootstrap Toast
+        let toast = new bootstrap.Toast(document.getElementById("successToast"));
+        toast.show();
+
+        // Redirect after 2 seconds
+        setTimeout(() => {
+          window.location.href = data.redirect_url;
+        }, 1000);
+      } else {
+        validationMessages.innerHTML = `<div class='alert alert-danger'>${data.message}</div>`;
+      }
+    })
+    .catch(error => {
+      console.error("Error:", error);
+      validationMessages.innerHTML = "<div class='alert alert-danger'>An error occurred. Please try again.</div>";
+    });
+  });
+
+  // Close button
+  document.getElementById("closeLogin").addEventListener("click", function () {
+    document.getElementById("loginContainer").style.display = "none";
+  });
+</script>
+
+{% endblock authbody %}

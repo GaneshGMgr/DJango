@@ -1,0 +1,692 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}System Logs{% endblock %}
+
+{% block adminbody %}
+
+{% if request.user.is_authenticated and request.user.is_staff and request.user.is_active %}
+
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0"><i class="fas fa-clipboard-list me-2 text-primary"></i> System Logs</h2>
+            <p class="text-muted mb-0">Monitor system activities and error events</p>
+        </div>
+        <div>
+            <button class="btn btn-outline-secondary me-2" id="exportLogsBtn">
+                <i class="fas fa-download me-1"></i> Export
+            </button>
+            <div class="btn-group">
+                <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-filter me-1"></i> Filter
+                </button>
+                <ul class="dropdown-menu">
+                    <li><h6 class="dropdown-header">Log Type</h6></li>
+                    <li><a class="dropdown-item active" href="#" data-type="all">All Logs</a></li>
+                    <li><a class="dropdown-item" href="#" data-type="audit">Audit Trails</a></li>
+                    <li><a class="dropdown-item" href="#" data-type="error">Error Logs</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><h6 class="dropdown-header">Time Range</h6></li>
+                    <li><a class="dropdown-item" href="#" data-range="today">Today</a></li>
+                    <li><a class="dropdown-item" href="#" data-range="week">This Week</a></li>
+                    <li><a class="dropdown-item" href="#" data-range="month">This Month</a></li>
+                    <li><a class="dropdown-item" href="#" data-range="custom">Custom Range</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards Row -->
+    <div class="row g-4 mb-4">
+        <!-- Total Logs -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card shadow-sm" style="border-left: 4px solid #4e73df;">
+                <div class="card-body">
+                    <h6 class="text-muted small text-uppercase fw-bold">Total Logs</h6>
+                    <h3 class="fw-bold mb-1">1,842</h3>
+                    <div class="text-muted small">
+                        <i class="fas fa-database me-1"></i> System Activities
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audit Logs -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card shadow-sm" style="border-left: 4px solid #1cc88a;">
+                <div class="card-body">
+                    <h6 class="text-muted small text-uppercase fw-bold">Audit Trails</h6>
+                    <h3 class="fw-bold mb-1">1,284</h3>
+                    <div class="text-success small">
+                        <i class="fas fa-user-edit me-1"></i> User Activities
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Logs -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card shadow-sm" style="border-left: 4px solid #e74a3b;">
+                <div class="card-body">
+                    <h6 class="text-muted small text-uppercase fw-bold">Error Logs</h6>
+                    <h3 class="fw-bold mb-1">558</h3>
+                    <div class="text-danger small">
+                        <i class="fas fa-exclamation-triangle me-1"></i> System Issues
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Critical Errors -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card shadow-sm" style="border-left: 4px solid #f6c23e;">
+                <div class="card-body">
+                    <h6 class="text-muted small text-uppercase fw-bold">Critical Errors</h6>
+                    <h3 class="fw-bold mb-1">23</h3>
+                    <div class="text-warning small">
+                        <i class="fas fa-bug me-1"></i> Requires Attention
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Tabs -->
+    <ul class="nav nav-tabs mb-4" id="logsTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active text-black" id="audit-tab" data-bs-toggle="tab" data-bs-target="#audit" type="button" role="tab">
+                <i class="fas fa-user-shield me-1"></i> Audit Trails
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link text-black" id="errors-tab" data-bs-toggle="tab" data-bs-target="#errors" type="button" role="tab">
+                <i class="fas fa-exclamation-circle me-1"></i> Error Logs
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="logsTabContent">
+        <!-- Audit Trails Tab -->
+        <div class="tab-pane fade show active" id="audit" role="tabpanel">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center border-bottom">
+                    <h5 class="mb-0">User Activity Logs</h5>
+                    <div class="input-group w-auto">
+                        <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" id="auditSearch" placeholder="Search activities...">
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="auditTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>User</th>
+                                    <th>Action</th>
+                                    <th>Entity</th>
+                                    <th>Details</th>
+                                    <th>IP Address</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Product Edit Example -->
+                                <tr>
+                                    <td>
+                                        <span class="d-block">2023-06-15</span>
+                                        <small class="text-muted">09:42:23</small>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="https://via.placeholder.com/40" width="32" height="32" class="rounded-circle me-2" alt="User">
+                                            <span>admin@example.com</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-primary bg-opacity-10 text-primary">Updated</span></td>
+                                    <td>
+                                        <span class="d-block">Product</span>
+                                        <small class="text-muted">ID: PROD-1001</small>
+                                    </td>
+                                    <td>
+                                        <small>Changed price from $99.99 to $89.99</small>
+                                    </td>
+                                    <td>192.168.1.45</td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#logDetailModal">
+                                            <i class="fas fa-eye"></i> Details
+                                        </button>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Order Status Change Example -->
+                                <tr>
+                                    <td>
+                                        <span class="d-block">2023-06-15</span>
+                                        <small class="text-muted">08:15:07</small>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="https://via.placeholder.com/40" width="32" height="32" class="rounded-circle me-2" alt="User">
+                                            <span>manager@example.com</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-info bg-opacity-10 text-info">Status Change</span></td>
+                                    <td>
+                                        <span class="d-block">Order</span>
+                                        <small class="text-muted">#ORD-28475</small>
+                                    </td>
+                                    <td>
+                                        <small>Changed status from "Processing" to "Shipped"</small>
+                                    </td>
+                                    <td>192.168.1.102</td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#logDetailModal">
+                                            <i class="fas fa-eye"></i> Details
+                                        </button>
+                                    </td>
+                                </tr>
+                                
+                                <!-- User Permission Change Example -->
+                                <tr>
+                                    <td>
+                                        <span class="d-block">2023-06-14</span>
+                                        <small class="text-muted">16:30:45</small>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="https://via.placeholder.com/40" width="32" height="32" class="rounded-circle me-2" alt="User">
+                                            <span>admin@example.com</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-warning bg-opacity-10 text-warning">Modified</span></td>
+                                    <td>
+                                        <span class="d-block">User Permissions</span>
+                                        <small class="text-muted">staff@example.com</small>
+                                    </td>
+                                    <td>
+                                        <small>Added "Inventory Management" permission</small>
+                                    </td>
+                                    <td>192.168.1.45</td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#logDetailModal">
+                                            <i class="fas fa-eye"></i> Details
+                                        </button>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Product Creation Example -->
+                                <tr>
+                                    <td>
+                                        <span class="d-block">2023-06-14</span>
+                                        <small class="text-muted">11:05:33</small>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="https://via.placeholder.com/40" width="32" height="32" class="rounded-circle me-2" alt="User">
+                                            <span>inventory@example.com</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-success bg-opacity-10 text-success">Created</span></td>
+                                    <td>
+                                        <span class="d-block">Product</span>
+                                        <small class="text-muted">ID: PROD-1002</small>
+                                    </td>
+                                    <td>
+                                        <small>Added new product "Wireless Keyboard"</small>
+                                    </td>
+                                    <td>192.168.1.78</td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#logDetailModal">
+                                            <i class="fas fa-eye"></i> Details
+                                        </button>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Order Edit Example -->
+                                <tr>
+                                    <td>
+                                        <span class="d-block">2023-06-13</span>
+                                        <small class="text-muted">14:22:18</small>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="https://via.placeholder.com/40" width="32" height="32" class="rounded-circle me-2" alt="User">
+                                            <span>support@example.com</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-primary bg-opacity-10 text-primary">Updated</span></td>
+                                    <td>
+                                        <span class="d-block">Order</span>
+                                        <small class="text-muted">#ORD-28470</small>
+                                    </td>
+                                    <td>
+                                        <small>Updated shipping address</small>
+                                    </td>
+                                    <td>192.168.1.56</td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#logDetailModal">
+                                            <i class="fas fa-eye"></i> Details
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-white">
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0 justify-content-center">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#"><i class="fas fa-chevron-left"></i></a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#"><i class="fas fa-chevron-right"></i></a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Logs Tab -->
+        <div class="tab-pane fade" id="errors" role="tabpanel">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center border-bottom">
+                    <h5 class="mb-0">System Error Logs</h5>
+                    <div class="input-group w-auto">
+                        <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" id="errorSearch" placeholder="Search errors...">
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="errorTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Error Type</th>
+                                    <th>Severity</th>
+                                    <th>Source</th>
+                                    <th>Message</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Payment Failure Example -->
+                                <tr class="table-danger">
+                                    <td>
+                                        <span class="d-block">2023-06-15</span>
+                                        <small class="text-muted">10:05:47</small>
+                                    </td>
+                                    <td>Payment Processing</td>
+                                    <td><span class="badge bg-danger">Critical</span></td>
+                                    <td>Stripe API</td>
+                                    <td>
+                                        <small>Failed to process payment for order #ORD-28475: Card declined (code: insufficient_funds)</small>
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#logDetailModal">
+                                            <i class="fas fa-eye"></i> Details
+                                        </button>
+                                    </td>
+                                </tr>
+                                
+                                <!-- API Connection Issue -->
+                                <tr class="table-warning">
+                                    <td>
+                                        <span class="d-block">2023-06-15</span>
+                                        <small class="text-muted">09:30:12</small>
+                                    </td>
+                                    <td>API Connection</td>
+                                    <td><span class="badge bg-warning">High</span></td>
+                                    <td>Shipping API</td>
+                                    <td>
+                                        <small>Connection timeout when fetching rates (retried 3 times)</small>
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#logDetailModal">
+                                            <i class="fas fa-eye"></i> Details
+                                        </button>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Inventory Sync Error -->
+                                <tr>
+                                    <td>
+                                        <span class="d-block">2023-06-14</span>
+                                        <small class="text-muted">17:45:33</small>
+                                    </td>
+                                    <td>Inventory Sync</td>
+                                    <td><span class="badge bg-warning">High</span></td>
+                                    <td>Warehouse System</td>
+                                    <td>
+                                        <small>Failed to sync inventory for SKU INV-4872: Invalid product ID</small>
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#logDetailModal">
+                                            <i class="fas fa-eye"></i> Details
+                                        </button>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Email Service Error -->
+                                <tr>
+                                    <td>
+                                        <span class="d-block">2023-06-14</span>
+                                        <small class="text-muted">13:20:08</small>
+                                    </td>
+                                    <td>Email Service</td>
+                                    <td><span class="badge bg-secondary">Medium</span></td>
+                                    <td>SendGrid API</td>
+                                    <td>
+                                        <small>Failed to send order confirmation to customer@example.com</small>
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#logDetailModal">
+                                            <i class="fas fa-eye"></i> Details
+                                        </button>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Database Query Error -->
+                                <tr>
+                                    <td>
+                                        <span class="d-block">2023-06-13</span>
+                                        <small class="text-muted">08:12:55</small>
+                                    </td>
+                                    <td>Database</td>
+                                    <td><span class="badge bg-danger">Critical</span></td>
+                                    <td>MySQL</td>
+                                    <td>
+                                        <small>Deadlock detected when updating customer records</small>
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#logDetailModal">
+                                            <i class="fas fa-eye"></i> Details
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-white">
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0 justify-content-center">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#"><i class="fas fa-chevron-left"></i></a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#"><i class="fas fa-chevron-right"></i></a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Log Detail Modal -->
+<div class="modal fade" id="logDetailModal" tabindex="-1" aria-labelledby="logDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" style="max-width: 900px;">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color: #1e293b; color: white; border-bottom: 1px solid #334155;">
+                <h5 class="modal-title" id="logDetailModalLabel">Log Entry Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6 class="text-muted small text-uppercase fw-bold">Timestamp</h6>
+                        <p>2023-06-15 09:42:23 UTC</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted small text-uppercase fw-bold">Event Type</h6>
+                        <p><span class="badge bg-primary bg-opacity-10 text-primary">Product Update</span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted small text-uppercase fw-bold">User</h6>
+                        <div class="d-flex align-items-center">
+                            <img src="https://via.placeholder.com/40" width="32" height="32" class="rounded-circle me-2" alt="User">
+                            <div>
+                                <span class="d-block">admin@example.com</span>
+                                <small class="text-muted">Admin User</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted small text-uppercase fw-bold">IP Address</h6>
+                        <p>192.168.1.45</p>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <h6 class="text-muted small text-uppercase fw-bold">Affected Entity</h6>
+                    <p>Product <span class="text-muted">(ID: PROD-1001)</span></p>
+                </div>
+                
+                <div class="mb-4">
+                    <h6 class="text-muted small text-uppercase fw-bold">Changes</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Old Value</th>
+                                    <th>New Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Price</td>
+                                    <td>$99.99</td>
+                                    <td>$89.99</td>
+                                </tr>
+                                <tr>
+                                    <td>Stock Quantity</td>
+                                    <td>45</td>
+                                    <td>42</td>
+                                </tr>
+                                <tr>
+                                    <td>Description</td>
+                                    <td>Previous description text...</td>
+                                    <td>Updated description text...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div>
+                    <h6 class="text-muted small text-uppercase fw-bold">Raw Data</h6>
+                    <pre class="bg-light p-3 rounded" style="max-height: 200px; overflow: auto;">
+{
+  "event_id": "audit_2847563",
+  "timestamp": "2023-06-15T09:42:23Z",
+  "user_id": "usr_928475",
+  "action": "product_update",
+  "entity_type": "product",
+  "entity_id": "PROD-1001",
+  "changes": {
+    "price": {
+      "old": 99.99,
+      "new": 89.99
+    },
+    "stock": {
+      "old": 45,
+      "new": 42
+    },
+    "description": {
+      "old": "Previous description text...",
+      "new": "Updated description text..."
+    }
+  },
+  "metadata": {
+    "ip_address": "192.168.1.45",
+    "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
+  }
+}</pre>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Export This Entry</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Error Log Detail Modal -->
+<div class="modal fade" id="errorLogDetailModal" tabindex="-1" aria-labelledby="errorLogDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" style="max-width: 900px;">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color: #1e293b; color: white; border-bottom: 1px solid #334155;">
+                <h5 class="modal-title" id="errorLogDetailModalLabel">Error Log Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6 class="text-muted small text-uppercase fw-bold">Timestamp</h6>
+                        <p>2023-06-15 10:05:47 UTC</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted small text-uppercase fw-bold">Error Type</h6>
+                        <p><span class="badge bg-danger bg-opacity-10 text-danger">Payment Processing</span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted small text-uppercase fw-bold">Severity</h6>
+                        <p><span class="badge bg-danger">Critical</span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted small text-uppercase fw-bold">Source</h6>
+                        <p>Stripe API</p>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <h6 class="text-muted small text-uppercase fw-bold">Affected Resource</h6>
+                    <p>Order <span class="text-muted">(#ORD-28475)</span></p>
+                </div>
+                
+                <div class="mb-4">
+                    <h6 class="text-muted small text-uppercase fw-bold">Error Message</h6>
+                    <div class="alert alert-danger">
+                        Failed to process payment for order #ORD-28475: Card declined (code: insufficient_funds)
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <h6 class="text-muted small text-uppercase fw-bold">Stack Trace</h6>
+                    <pre class="bg-light p-3 rounded" style="max-height: 200px; overflow: auto;">
+PaymentProcessor::processPayment() at line 142
+OrderService::completeCheckout() at line 89
+CheckoutController::processPayment() at line 56
+[internal function]
+Illuminate\Routing\Controller::callAction()
+...</pre>
+                </div>
+                
+                <div>
+                    <h6 class="text-muted small text-uppercase fw-bold">Raw Error Data</h6>
+                    <pre class="bg-light p-3 rounded" style="max-height: 200px; overflow: auto;">
+{
+  "error_id": "err_8475629",
+  "timestamp": "2023-06-15T10:05:47Z",
+  "type": "payment_failure",
+  "severity": "critical",
+  "source": "stripe_api",
+  "message": "Card declined: insufficient_funds",
+  "context": {
+    "order_id": "ORD-28475",
+    "user_id": "usr_573829",
+    "amount": 89.99,
+    "payment_method": "card_1Mq...",
+    "error_code": "card_declined",
+    "decline_code": "insufficient_funds"
+  },
+  "environment": {
+    "app_version": "2.3.1",
+    "php_version": "8.1.12"
+  }
+}</pre>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Export This Entry</button>
+                <button type="button" class="btn btn-danger">Mark as Resolved</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tab functionality
+        const auditTab = document.getElementById('audit-tab');
+        const errorsTab = document.getElementById('errors-tab');
+        
+        // Filter functionality
+        document.querySelectorAll('.dropdown-item[data-type]').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const type = this.getAttribute('data-type');
+                
+                // In a real app, you would filter the logs here
+                console.log('Filtering by type:', type);
+                
+                // Update active state
+                document.querySelectorAll('.dropdown-item[data-type]').forEach(i => {
+                    i.classList.remove('active');
+                });
+                this.classList.add('active');
+            });
+        });
+        
+        // Time range filter
+        document.querySelectorAll('.dropdown-item[data-range]').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const range = this.getAttribute('data-range');
+                
+                // In a real app, you would filter by time range here
+                console.log('Filtering by range:', range);
+                
+                // Update active state
+                document.querySelectorAll('.dropdown-item[data-range]').forEach(i => {
+                    i.classList.remove('active');
+                });
+                this.classList.add('active');
+            });
+        });
+        
+        // Search functionality
+        document.getElementById('auditSearch').addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+            // Filter audit table rows
+        });
+        
+        document.getElementById('errorSearch').addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+            // Filter error table rows
+        });
+        
+        // Export functionality
+        document.getElementById('exportLogsBtn').addEventListener('click', function() {
+            // In a real app, this would trigger a CSV/PDF export
+            console.log('Exporting logs...');
+        });
+    });
+</script>
+
+{% endif %}
+{% endblock %}

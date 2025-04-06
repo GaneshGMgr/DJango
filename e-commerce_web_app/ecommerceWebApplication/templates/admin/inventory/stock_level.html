@@ -1,0 +1,387 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Inventory Dashboard{% endblock %}
+
+{% block adminbody %}
+
+{% if request.user.is_authenticated and request.user.is_staff and request.user.is_active %}
+
+<div class="container-fluid py-4">
+    <!-- Stats Cards Row -->
+    <div class="row g-4 mb-4">
+        <!-- Total Products -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card shadow-sm" style="border-left: 4px solid #17a2b8;">
+                <div class="card-body">
+                    <h6 class="text-muted small text-uppercase fw-bold">Total Products</h6>
+                    <h3 class="fw-bold mb-1">1,248</h3>
+                    <div class="text-muted small">
+                        <i class="fas fa-boxes me-1"></i> All Inventory
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- In-Stock Products -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card shadow-sm" style="border-left: 4px solid #28a745;">
+                <div class="card-body">
+                    <h6 class="text-muted small text-uppercase fw-bold">In Stock</h6>
+                    <h3 class="fw-bold mb-1">956</h3>
+                    <div class="text-success small">
+                        <i class="fas fa-check-circle me-1"></i> 76% Available
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Low-Stock Alerts -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card shadow-sm" style="border-left: 4px solid #ffc107;">
+                <div class="card-body">
+                    <h6 class="text-muted small text-uppercase fw-bold">Low Stock</h6>
+                    <h3 class="fw-bold mb-1">42</h3>
+                    <div class="text-warning small">
+                        <i class="fas fa-exclamation-triangle me-1"></i> Needs Restock
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Out-of-Stock -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card shadow-sm" style="border-left: 4px solid #dc3545;">
+                <div class="card-body">
+                    <h6 class="text-muted small text-uppercase fw-bold">Out of Stock</h6>
+                    <h3 class="fw-bold mb-1">18</h3>
+                    <div class="text-danger small">
+                        <i class="fas fa-times-circle me-1"></i> Urgent Action
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory Table -->
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center bg-white border-bottom">
+            <div>
+                <h5 class="mb-0"><i class="fas fa-boxes me-2 text-primary"></i> Inventory Overview</h5>
+                <p class="small text-muted mb-0">Last updated: Today, 10:45 AM</p>
+            </div>
+            <div>
+                <button class="btn btn-sm btn-outline-secondary me-2" id="exportBtn">
+                    <i class="fas fa-download me-1"></i> Export
+                </button>
+                <a href="#" class="btn btn-sm btn-primary" id="adjustStockBtn">
+                    <i class="fas fa-plus me-1"></i> Adjust Stock
+                </a>
+            </div>
+        </div>
+        
+        <!-- Search and Filter Section -->
+        <div class="card-body border-bottom bg-light">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search products...">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" id="statusFilter">
+                        <option value="all">All Statuses</option>
+                        <option value="in_stock">In Stock</option>
+                        <option value="low_stock">Low Stock</option>
+                        <option value="out_of_stock">Out of Stock</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" id="categoryFilter">
+                        <option value="all">All Categories</option>
+                        <option value="electronics">Electronics</option>
+                        <option value="clothing">Clothing</option>
+                        <option value="home_goods">Home Goods</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" id="subcategoryFilter">
+                        <option value="all">All Subcategories</option>
+                        <option value="audio">Audio</option>
+                        <option value="mens_wear">Men's Wear</option>
+                        <option value="kitchenware">Kitchenware</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button class="btn btn-outline-primary flex-grow-1" id="applyFiltersBtn">
+                        <i class="fas fa-filter me-1"></i> Apply
+                    </button>
+                    <button class="btn btn-outline-secondary" id="resetFiltersBtn">
+                        <i class="fas fa-undo"></i> Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bulk Action Panel (hidden by default) -->
+        <div id="bulkActionPanel" class="bg-light p-3 border-bottom" style="display: none;">
+            <div class="d-flex align-items-center">
+                <span class="me-3" id="selectedCount">0 items selected</span>
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-outline-danger" id="bulkDeleteBtn">
+                        <i class="fas fa-trash me-1"></i> Delete Selected
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" id="bulkRestockBtn">
+                        <i class="fas fa-boxes me-1"></i> Restock Selected
+                    </button>
+                </div>
+                <button class="btn btn-sm btn-link text-danger" id="clearSelectionBtn">
+                    <i class="fas fa-times me-1"></i> Clear
+                </button>
+            </div>
+        </div>
+        
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="inventoryTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="50">
+                                <input type="checkbox" id="selectAllCheckbox" class="form-check-input">
+                            </th>
+                            <th>SKU</th>
+                            <th>Product Name</th>
+                            <th>Category</th>
+                            <th>Subcategory</th>
+                            <th class="text-end">Current Stock</th>
+                            <th class="text-end">Threshold</th>
+                            <th>Status</th>
+                            <th>Updated</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- In Stock Item -->
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="form-check-input row-checkbox" data-id="1">
+                            </td>
+                            <td class="fw-bold">ELEC-001</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 me-2">
+                                        <img src="https://via.placeholder.com/40" width="40" height="40" class="rounded" alt="Product">
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        Wireless Headphones
+                                        <small class="text-muted d-block">Color: Black, Red</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>Electronics</td>
+                            <td>Audio</td>
+                            <td class="text-end">124</td>
+                            <td class="text-end">10</td>
+                            <td><span class="badge bg-success bg-opacity-10 text-success">In Stock</span></td>
+                            <td>2023-06-15</td>
+                            <td class="text-center">
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item update-stock-btn" href="#" data-id="1"><i class="fas fa-edit me-2"></i> Update Stock</a></li>
+                                        <li><a class="dropdown-item view-history-btn" href="#" data-id="1"><i class="fas fa-history me-2"></i> View History</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger delete-item-btn" href="#" data-id="1"><i class="fas fa-trash me-2"></i> Delete</a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Low Stock Item -->
+                        <tr class="table-warning">
+                            <td>
+                                <input type="checkbox" class="form-check-input row-checkbox" data-id="2">
+                            </td>
+                            <td class="fw-bold">CLOTH-205</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 me-2">
+                                        <img src="https://via.placeholder.com/40" width="40" height="40" class="rounded" alt="Product">
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        Cotton T-Shirt
+                                        <small class="text-muted d-block">Size: S, M, L</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>Clothing</td>
+                            <td>Men's Wear</td>
+                            <td class="text-end">4</td>
+                            <td class="text-end">5</td>
+                            <td><span class="badge bg-warning bg-opacity-10 text-warning">Low Stock</span></td>
+                            <td>2023-06-18</td>
+                            <td class="text-center">
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item update-stock-btn" href="#" data-id="2"><i class="fas fa-edit me-2"></i> Update Stock</a></li>
+                                        <li><a class="dropdown-item view-history-btn" href="#" data-id="2"><i class="fas fa-history me-2"></i> View History</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger delete-item-btn" href="#" data-id="2"><i class="fas fa-trash me-2"></i> Delete</a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Out of Stock Item -->
+                        <tr class="table-danger">
+                            <td>
+                                <input type="checkbox" class="form-check-input row-checkbox" data-id="3">
+                            </td>
+                            <td class="fw-bold">HOME-032</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 me-2">
+                                        <img src="https://via.placeholder.com/40" width="40" height="40" class="rounded" alt="Product">
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        Ceramic Coffee Mug
+                                        <small class="text-muted d-block">Color: White</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>Home Goods</td>
+                            <td>Kitchenware</td>
+                            <td class="text-end">0</td>
+                            <td class="text-end">3</td>
+                            <td><span class="badge bg-danger bg-opacity-10 text-danger">Out of Stock</span></td>
+                            <td>2023-06-20</td>
+                            <td class="text-center">
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item update-stock-btn" href="#" data-id="3"><i class="fas fa-edit me-2"></i> Update Stock</a></li>
+                                        <li><a class="dropdown-item view-history-btn" href="#" data-id="3"><i class="fas fa-history me-2"></i> View History</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger delete-item-btn" href="#" data-id="3"><i class="fas fa-trash me-2"></i> Delete</a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+            <div>
+                <select class="form-select form-select-sm w-auto d-inline-block me-2" id="itemsPerPage">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+                <span class="text-muted small">items per page</span>
+            </div>
+            <nav>
+                <ul class="pagination pagination-sm mb-0" id="pagination">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" id="prevPage"><i class="fas fa-chevron-left"></i></a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#" id="nextPage"><i class="fas fa-chevron-right"></i></a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // DOM Elements
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+        const bulkActionPanel = document.getElementById('bulkActionPanel');
+        const selectedCount = document.getElementById('selectedCount');
+        const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+        const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+        const bulkRestockBtn = document.getElementById('bulkRestockBtn');
+    
+        // Select All functionality
+        selectAllCheckbox.addEventListener('change', function() {
+            const isChecked = this.checked;
+            rowCheckboxes.forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+            updateBulkActionPanel();
+        });
+    
+        // Individual row checkbox functionality
+        rowCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateBulkActionPanel);
+        });
+    
+        // Clear selection
+        clearSelectionBtn.addEventListener('click', function() {
+            rowCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            selectAllCheckbox.checked = false;
+            bulkActionPanel.style.display = 'none';
+        });
+    
+        // Bulk delete action
+        bulkDeleteBtn.addEventListener('click', function() {
+            const selectedIds = getSelectedIds();
+            if (selectedIds.length > 0) {
+                if (confirm(`Are you sure you want to delete ${selectedIds.length} selected items?`)) {
+                    alert(`Deleted items with IDs: ${selectedIds.join(', ')}`);
+                    // In a real app, you would make an AJAX call here
+                }
+            }
+        });
+    
+        // Bulk restock action
+        bulkRestockBtn.addEventListener('click', function() {
+            const selectedIds = getSelectedIds();
+            if (selectedIds.length > 0) {
+                alert(`Restocking items with IDs: ${selectedIds.join(', ')}`);
+                // In a real app, you would make an AJAX call here
+            }
+        });
+    
+        // Helper function to update bulk action panel visibility
+        function updateBulkActionPanel() {
+            const checkedCount = document.querySelectorAll('.row-checkbox:checked').length;
+            if (checkedCount > 0) {
+                bulkActionPanel.style.display = 'block';
+                selectedCount.textContent = `${checkedCount} items selected`;
+                selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < rowCheckboxes.length;
+            } else {
+                bulkActionPanel.style.display = 'none';
+                selectAllCheckbox.indeterminate = false;
+            }
+        }
+    
+        // Helper function to get selected IDs
+        function getSelectedIds() {
+            const selectedIds = [];
+            document.querySelectorAll('.row-checkbox:checked').forEach(checkbox => {
+                selectedIds.push(checkbox.getAttribute('data-id'));
+            });
+            return selectedIds;
+        }
+    });
+</script>
+
+{% endif %}
+{% endblock %}

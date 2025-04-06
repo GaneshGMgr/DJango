@@ -1,0 +1,615 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Staff Management{% endblock %}
+
+{% block adminbody %}
+
+{% if request.user.is_authenticated and request.user.is_staff and request.user.is_active %}
+
+<div class="container-fluid py-4">
+    <!-- Stats Cards Row -->
+    <div class="row g-4 mb-4">
+        <!-- Total Staff -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card shadow-sm" style="border-left: 4px solid #17a2b8;">
+                <div class="card-body">
+                    <h6 class="text-muted small text-uppercase fw-bold">Total Staff</h6>
+                    <h3 class="fw-bold mb-1">{{ total_staff }}</h3>
+                    <div class="text-muted small">
+                        <i class="fas fa-users me-1"></i> All Accounts
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Staff -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card shadow-sm" style="border-left: 4px solid #28a745;">
+                <div class="card-body">
+                    <h6 class="text-muted small text-uppercase fw-bold">Active</h6>
+                    <h3 class="fw-bold mb-1">{{ active_staff }}</h3>
+                    <div class="text-success small">
+                        <i class="fas fa-check-circle me-1"></i> Currently Active
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admins -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card shadow-sm" style="border-left: 4px solid #6f42c1;">
+                <div class="card-body">
+                    <h6 class="text-muted small text-uppercase fw-bold">Admins</h6>
+                    <h3 class="fw-bold mb-1">{{ admin_count }}</h3>
+                    <div class="text-primary small">
+                        <i class="fas fa-user-shield me-1"></i> Full Access
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Regular Staff -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card shadow-sm" style="border-left: 4px solid #fd7e14;">
+                <div class="card-body">
+                    <h6 class="text-muted small text-uppercase fw-bold">Regular Staff</h6>
+                    <h3 class="fw-bold mb-1">{{ staff_count }}</h3>
+                    <div class="text-warning small">
+                        <i class="fas fa-user-tie me-1"></i> Limited Access
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Staff Table -->
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center bg-white border-bottom">
+            <div>
+                <h5 class="mb-0"><i class="fas fa-users-cog me-2 text-primary"></i> Staff Accounts</h5>
+                <p class="small text-muted mb-0">Last updated: {{ last_updated }}</p>
+            </div>
+            <div>
+                <button class="btn btn-sm btn-outline-secondary me-2" id="exportBtn">
+                    <i class="fas fa-download me-1"></i> Export
+                </button>
+                <a href="#" class="btn btn-sm btn-primary" id="addStaffBtn">
+                    <i class="fas fa-plus me-1"></i> Add Staff
+                </a>
+            </div>
+        </div>
+        
+        <!-- Search and Filter Section -->
+        <div class="card-body border-bottom bg-light">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search staff by name, email...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="statusFilter">
+                        <option value="all">All Statuses</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" id="roleFilter">
+                        <option value="all">All Roles</option>
+                        <option value="admin">Admin</option>
+                        <option value="staff">Staff</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button class="btn btn-outline-primary flex-grow-1" id="applyFiltersBtn">
+                        <i class="fas fa-filter me-1"></i> Apply
+                    </button>
+                    <button class="btn btn-outline-secondary" id="resetFiltersBtn">
+                        <i class="fas fa-undo"></i> Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bulk Action Panel (hidden by default) -->
+        <div id="bulkActionPanel" class="bg-light p-3 border-bottom" style="display: none;">
+            <div class="d-flex align-items-center">
+                <span class="me-3" id="selectedCount">0 accounts selected</span>
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-outline-danger" id="bulkDeactivateBtn">
+                        <i class="fas fa-user-slash me-1"></i> Deactivate
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" id="bulkActivateBtn">
+                        <i class="fas fa-user-check me-1"></i> Activate
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" id="bulkResetPasswordBtn">
+                        <i class="fas fa-key me-1"></i> Reset Password
+                    </button>
+                </div>
+                <button class="btn btn-sm btn-link text-danger" id="clearSelectionBtn">
+                    <i class="fas fa-times me-1"></i> Clear
+                </button>
+            </div>
+        </div>
+        
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="staffTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="50">
+                                <input type="checkbox" id="selectAllCheckbox" class="form-check-input">
+                            </th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Department</th>
+                            <th>Role</th>
+                            <th>Permissions</th>
+                            <th>Status</th>
+                            <th>Last Active</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Admin Account -->
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="form-check-input row-checkbox" data-id="1">
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 me-2">
+                                        <img src="https://via.placeholder.com/40" width="40" height="40" class="rounded-circle" alt="User">
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        Admin User
+                                        <small class="text-muted d-block">ID: ADM001</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>admin@example.com</td>
+                            <td>Management</td>
+                            <td><span class="badge bg-primary bg-opacity-10 text-primary">Admin</span></td>
+                            <td>
+                                <span class="badge bg-info bg-opacity-10 text-info me-1">Full Access</span>
+                            </td>
+                            <td><span class="badge bg-success bg-opacity-10 text-success">Active</span></td>
+                            <td>Today, 09:45 AM</td>
+                            <td class="text-center">
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item edit-staff-btn" href="#" data-id="1"><i class="fas fa-edit me-2"></i> Edit</a></li>
+                                        <li><a class="dropdown-item view-permissions-btn" href="#" data-id="1"><i class="fas fa-key me-2"></i> Permissions</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger deactivate-btn" href="#" data-id="1"><i class="fas fa-user-slash me-2"></i> Deactivate</a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Staff Account -->
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="form-check-input row-checkbox" data-id="2">
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 me-2">
+                                        <img src="https://via.placeholder.com/40" width="40" height="40" class="rounded-circle" alt="User">
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        Support Staff
+                                        <small class="text-muted d-block">ID: STF205</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>staff@example.com</td>
+                            <td>Customer Support</td>
+                            <td><span class="badge bg-warning bg-opacity-10 text-warning">Staff</span></td>
+                            <td>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary me-1">Orders</span>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary me-1">Inventory</span>
+                            </td>
+                            <td><span class="badge bg-success bg-opacity-10 text-success">Active</span></td>
+                            <td>Yesterday, 02:30 PM</td>
+                            <td class="text-center">
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item edit-staff-btn" href="#" data-id="2"><i class="fas fa-edit me-2"></i> Edit</a></li>
+                                        <li><a class="dropdown-item view-permissions-btn" href="#" data-id="2"><i class="fas fa-key me-2"></i> Permissions</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger deactivate-btn" href="#" data-id="2"><i class="fas fa-user-slash me-2"></i> Deactivate</a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Inactive Account -->
+                        <tr class="table-secondary">
+                            <td>
+                                <input type="checkbox" class="form-check-input row-checkbox" data-id="3">
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 me-2">
+                                        <img src="https://via.placeholder.com/40" width="40" height="40" class="rounded-circle" alt="User">
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        Former Employee
+                                        <small class="text-muted d-block">ID: STF032</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>former@example.com</td>
+                            <td>-</td>
+                            <td><span class="badge bg-secondary bg-opacity-10 text-secondary">Staff</span></td>
+                            <td>
+                                <span class="badge bg-danger bg-opacity-10 text-danger">Inactive</span>
+                            </td>
+                            <td><span class="badge bg-danger bg-opacity-10 text-danger">Inactive</span></td>
+                            <td>2023-05-15</td>
+                            <td class="text-center">
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item edit-staff-btn" href="#" data-id="3"><i class="fas fa-edit me-2"></i> Edit</a></li>
+                                        <li><a class="dropdown-item view-permissions-btn" href="#" data-id="3"><i class="fas fa-key me-2"></i> Permissions</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-success activate-btn" href="#" data-id="3"><i class="fas fa-user-check me-2"></i> Activate</a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+            <div>
+                <select class="form-select form-select-sm w-auto d-inline-block me-2" id="itemsPerPage">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+                <span class="text-muted small">accounts per page</span>
+            </div>
+            <nav>
+                <ul class="pagination pagination-sm mb-0" id="pagination">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" id="prevPage"><i class="fas fa-chevron-left"></i></a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#" id="nextPage"><i class="fas fa-chevron-right"></i></a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Add Staff Modal -->
+<div class="modal fade" id="addStaffModal" tabindex="-1" aria-labelledby="addStaffModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color: #1e293b; color: white; border-bottom: 1px solid #334155;">
+                <h5 class="modal-title" id="addStaffModalLabel">Add New Staff Member</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addStaffForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="addFirstName" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="addFirstName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="addLastName" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="addLastName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="addEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="addEmail" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="addPhone" class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="addPhone">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="addDepartment" class="form-label">Department</label>
+                            <select class="form-select" id="addDepartment">
+                                <option value="management">Management</option>
+                                <option value="sales">Sales</option>
+                                <option value="support">Customer Support</option>
+                                <option value="inventory">Inventory</option>
+                                <option value="marketing">Marketing</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="addRole" class="form-label">Role</label>
+                            <select class="form-select" id="addRole">
+                                <option value="admin">Admin</option>
+                                <option value="staff">Staff</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Permissions</label>
+                            <div class="row g-2">
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="addPermProducts">
+                                        <label class="form-check-label" for="addPermProducts">Products</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="addPermOrders">
+                                        <label class="form-check-label" for="addPermOrders">Orders</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="addPermCustomers">
+                                        <label class="form-check-label" for="addPermCustomers">Customers</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="addPermInventory">
+                                        <label class="form-check-label" for="addPermInventory">Inventory</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="addPermReports">
+                                        <label class="form-check-label" for="addPermReports">Reports</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="addPermSettings">
+                                        <label class="form-check-label" for="addPermSettings">Settings</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="addIsActive" checked>
+                                <label class="form-check-label" for="addIsActive">Account Active</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmAddStaffBtn">Add Staff</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Staff Modal -->
+<div class="modal fade" id="editStaffModal" tabindex="-1" aria-labelledby="editStaffModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color: #1e293b; color: white; border-bottom: 1px solid #334155;">
+                <h5 class="modal-title" id="editStaffModalLabel">Edit Staff Account</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="staffForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="firstName" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="firstName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="lastName" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="lastName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="phone">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="department" class="form-label">Department</label>
+                            <select class="form-select" id="department">
+                                <option value="management">Management</option>
+                                <option value="sales">Sales</option>
+                                <option value="support">Customer Support</option>
+                                <option value="inventory">Inventory</option>
+                                <option value="marketing">Marketing</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="role" class="form-label">Role</label>
+                            <select class="form-select" id="role">
+                                <option value="admin">Admin</option>
+                                <option value="staff">Staff</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Permissions</label>
+                            <div class="row g-2">
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="permProducts">
+                                        <label class="form-check-label" for="permProducts">Products</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="permOrders">
+                                        <label class="form-check-label" for="permOrders">Orders</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="permCustomers">
+                                        <label class="form-check-label" for="permCustomers">Customers</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="permInventory">
+                                        <label class="form-check-label" for="permInventory">Inventory</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="permReports">
+                                        <label class="form-check-label" for="permReports">Reports</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="permSettings">
+                                        <label class="form-check-label" for="permSettings">Settings</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="isActive">
+                                <label class="form-check-label" for="isActive">Account Active</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveStaffBtn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // DOM Elements
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+        const bulkActionPanel = document.getElementById('bulkActionPanel');
+        const selectedCount = document.getElementById('selectedCount');
+        const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+        const bulkDeactivateBtn = document.getElementById('bulkDeactivateBtn');
+        const bulkActivateBtn = document.getElementById('bulkActivateBtn');
+        const bulkResetPasswordBtn = document.getElementById('bulkResetPasswordBtn');
+        const addStaffModal = new bootstrap.Modal(document.getElementById('addStaffModal'));
+        const editStaffModal = new bootstrap.Modal(document.getElementById('editStaffModal'));
+        
+        // Select All functionality
+        selectAllCheckbox.addEventListener('change', function() {
+            const isChecked = this.checked;
+            rowCheckboxes.forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+            updateBulkActionPanel();
+        });
+    
+        // Individual row checkbox functionality
+        rowCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateBulkActionPanel);
+        });
+    
+        // Clear selection
+        clearSelectionBtn.addEventListener('click', function() {
+            rowCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            selectAllCheckbox.checked = false;
+            bulkActionPanel.style.display = 'none';
+        });
+    
+        // Bulk deactivate action
+        bulkDeactivateBtn.addEventListener('click', function() {
+            const selectedIds = getSelectedIds();
+            if (selectedIds.length > 0) {
+                if (confirm(`Are you sure you want to deactivate ${selectedIds.length} selected accounts?`)) {
+                    alert(`Deactivated accounts with IDs: ${selectedIds.join(', ')}`);
+                    // In a real app, you would make an AJAX call here
+                }
+            }
+        });
+    
+        // Bulk activate action
+        bulkActivateBtn.addEventListener('click', function() {
+            const selectedIds = getSelectedIds();
+            if (selectedIds.length > 0) {
+                alert(`Activated accounts with IDs: ${selectedIds.join(', ')}`);
+                // In a real app, you would make an AJAX call here
+            }
+        });
+        
+        // Bulk reset password action
+        bulkResetPasswordBtn.addEventListener('click', function() {
+            const selectedIds = getSelectedIds();
+            if (selectedIds.length > 0) {
+                if (confirm(`Reset passwords for ${selectedIds.length} selected accounts? They will receive an email with instructions.`)) {
+                    alert(`Password reset initiated for accounts: ${selectedIds.join(', ')}`);
+                    // In a real app, you would make an AJAX call here
+                }
+            }
+        });
+        
+        // Add staff button click handlers
+        document.getElementById('addStaffBtn').addEventListener('click', function() {
+            addStaffModal.show();
+        });
+
+        // Edit staff button click handlers
+        document.querySelectorAll('.edit-staff-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const staffId = this.getAttribute('data-id');
+                // In a real app, you would fetch staff data here
+                editStaffModal.show();
+            });
+        });
+    
+        // Helper function to update bulk action panel visibility
+        function updateBulkActionPanel() {
+            const checkedCount = document.querySelectorAll('.row-checkbox:checked').length;
+            if (checkedCount > 0) {
+                bulkActionPanel.style.display = 'block';
+                selectedCount.textContent = `${checkedCount} accounts selected`;
+                selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < rowCheckboxes.length;
+            } else {
+                bulkActionPanel.style.display = 'none';
+                selectAllCheckbox.indeterminate = false;
+            }
+        }
+    
+        // Helper function to get selected IDs
+        function getSelectedIds() {
+            const selectedIds = [];
+            document.querySelectorAll('.row-checkbox:checked').forEach(checkbox => {
+                selectedIds.push(checkbox.getAttribute('data-id'));
+            });
+            return selectedIds;
+        }
+    });
+</script>
+
+{% endif %}
+{% endblock %}

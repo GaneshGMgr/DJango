@@ -1,0 +1,327 @@
+{% extends "authentication/auth_base.html" %}
+{% block title %}Sign Up{% endblock title %}
+{% block authbody %}
+
+<style>
+  /* Center the form section with background */
+  .signup-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+    width: 100%;
+    position: relative;
+    transition: all 0.3s ease;
+  }
+
+  /* Background section */
+  .signup-background {
+    position: absolute; 
+    width: 90%;
+    max-width: 420px;
+    height: auto%;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(12px);
+    border-radius: 15px;
+    transition: all 0.3s ease;
+    z-index: 1;
+  }
+
+  /* Glassmorphism Card (Form) */
+  .signup-card {
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.25);
+    max-width: 380px;
+    width: 100%;
+    z-index: 2;
+    position: relative;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+
+  .signup-card h3 {
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 15px;
+  }
+
+  /* Crossbar (Close Button) */
+  .close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: #fff;
+    font-size: 20px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border: none;
+    border-radius: 50%;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: 0.3s ease;
+  }
+
+  .close-btn:hover {
+    background-color: rgba(0, 0, 0, 0.7);
+    transform: scale(1.1);
+  }
+
+  /* Form Inputs */
+  .form-group {
+    position: relative;
+    margin-bottom: 18px;
+    text-align: left;
+  }
+
+  .form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-size: 14px;
+  }
+
+  .form-group label {
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+    transition: 0.3s ease-in-out;
+  }
+
+  .form-group input:focus + label,
+  .form-group input:not(:placeholder-shown) + label {
+    top: 5px;
+    font-size: 12px;
+    color: #fff;
+  }
+
+  /* Password Toggle Icon */
+  .toggle-password {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #fff;
+    font-size: 18px;
+  }
+
+  /* Signup Button */
+  .btn-signup {
+    width: 100%;
+    background: #ff6f61;
+    color: #fff;
+    padding: 12px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    transition: 0.3s;
+    cursor: pointer;
+  }
+
+  .btn-signup:hover {
+    background: #ff4757;
+  }
+
+  /* Login Link */
+  .login-link {
+    color: #fff;
+    margin-top: 15px;
+    display: block;
+    text-decoration: none;
+  }
+
+  .login-link:hover {
+    text-decoration: underline;
+  }
+
+  /* Validation Message */
+  .validation-message {
+    color: #ff6f61;
+    margin-top: 10px;
+    font-size: 14px;
+    text-align: left;
+  }
+
+  .alert {
+    margin-top: 10px;
+  }
+
+  .alert-dismissible .btn-close {
+    color: #ff6f61;
+    opacity: 1;
+  }
+</style>
+
+<div class="signup-container" id="signupContainer">
+  <div class="signup-background"></div>  <!-- Background section -->
+  <div class="signup-card">
+    <button class="close-btn" id="closeBtn">×</button> <!-- Crossbar (Close Button) -->
+    <h3>Sign Up</h3>
+    <p class="text-light">Join us today!</p>
+
+    <div id="validationMessages">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show validation-message" role="alert">
+          <strong></strong>{{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    </div>
+
+    <form id="signupForm" action="javascript:void(0);">
+      <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+      <div class="form-group">
+        <input type="text" name="name" id="name" value="{{ name }}" required placeholder=" " />
+        <label for="name">Your Name</label>
+      </div>
+      <div class="form-group">
+        <input type="email" name="email" id="email" value="{{ email }}" required placeholder=" " />
+        <label for="email">Your Email</label>
+      </div>
+      <div class="form-group">
+        <input type="password" id="password" name="password" required placeholder=" " />
+        <label for="password">Password</label>
+        <i class="fas fa-eye toggle-password" id="togglePassword"></i>
+      </div>
+      <div class="form-group">
+        <input type="password" id="confirm_password" name="confirm_password" required placeholder=" " />
+        <label for="confirm_password">Confirm Password</label>
+        <i class="fas fa-eye toggle-password" id="toggleConfirmPassword"></i>
+      </div>
+      <button type="submit" class="btn-signup">Sign Up</button>
+      <a href="/auth/login/" class="login-link">Already have an account? Log in</a>
+    </form>
+  </div>
+</div>
+<!-- Password Toggle Script -->
+<script>
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const passwordLengthRegex = /^.{8,20}$/;
+
+  // Password toggle functionality
+  document.getElementById("togglePassword").addEventListener("click", function () {
+    const passwordField = document.getElementById("password");
+    passwordField.type = passwordField.type === "password" ? "text" : "password";
+    this.classList.toggle("fa-eye-slash");
+  });
+
+  document.getElementById("toggleConfirmPassword").addEventListener("click", function () {
+    const confirmPasswordField = document.getElementById("confirm_password");
+    confirmPasswordField.type = confirmPasswordField.type === "password" ? "text" : "password";
+    this.classList.toggle("fa-eye-slash");
+  });
+
+  // Form submission with validation
+  document.getElementById("signupForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+    console.log("Form submitted via fetch");
+
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const confirmPassword = document.getElementById("confirm_password").value;
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const validationMessages = document.getElementById("validationMessages");
+    validationMessages.innerHTML = ""; // clear previous messages
+
+    let errorMessages = [];
+
+    if (!name) {
+      errorMessages.push("Name field is required");
+    }
+
+    if (!emailRegex.test(email)) {
+      errorMessages.push("Please enter a valid email address");
+    }
+
+    if (!passwordLengthRegex.test(password)) {
+      errorMessages.push("Password must be 8-20 characters long");
+    }
+
+    if (!/(?=.*[A-Z])/.test(password)) {
+      errorMessages.push("Password must include at least one uppercase letter");
+    }
+
+    if (!/(?=.*[a-z])/.test(password)) {
+      errorMessages.push("Password must include at least one lowercase letter");
+    }
+
+    if (!/\d/.test(password)) {
+      errorMessages.push("Password must include at least one digit");
+    }
+
+    if (!/[!@#$%^&*]/.test(password)) {
+      errorMessages.push("Password must include at least one special character");
+    }
+
+    if (password !== confirmPassword) {
+      errorMessages.push("Passwords do not match");
+    }
+
+    if (errorMessages.length > 0) {
+      validationMessages.innerHTML = `
+        <div class='alert alert-danger'>
+          ${errorMessages.join("<br>")}
+        </div>`;
+      return;
+    }
+
+
+    // Send data using Fetch API
+    try {
+      const response = await fetch("/auth/signup/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "X-CSRFToken": csrfToken,
+        },
+        body: new URLSearchParams({
+          name,
+          email,
+          password,
+          confirm_password: confirmPassword,
+          csrfmiddlewaretoken: csrfToken,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        Toastify({
+          text: "Signup successful! Redirecting...",
+          duration: 1000, // Show for 3 seconds
+          gravity: "top", // Position
+          position: "right", // Right side
+          backgroundColor: "green",
+        }).showToast();
+  
+        setTimeout(() => {
+            window.location.href = "#";
+        }, 1000); // Redirect after 3 seconds
+      } else {
+        validationMessages.innerHTML = `
+          <div class='alert alert-danger'>${result.error || "Signup failed."}</div>`;
+      }
+    } catch (error) {
+      console.error("Signup error:", error);
+      validationMessages.innerHTML = `
+        <div class='alert alert-danger'>An unexpected error occurred. Please try again later.</div>`;
+    }
+  });
+
+  // Close button
+  document.getElementById("closeBtn").addEventListener("click", function () {
+    document.getElementById("signupContainer").style.display = "none";
+  });
+</script>
+
+
+{% endblock authbody %}

@@ -1,0 +1,2629 @@
+{% extends "admin/admin_base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block adminbody %}
+
+{% if request.user.is_authenticated and request.user.is_staff and request.user.is_active %}
+
+<style>
+  :root {
+    --primary-color: #2c3e50;
+    --secondary-color: #858796;
+    --success-color: #1cc88a;
+    --info-color: #36b9cc;
+    --warning-color: #f6c23e;
+    --danger-color: #e74a3b;
+    --light-color: #f8f9fc;
+    --dark-color: #5a5c69;
+    --shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    --transition: all 0.3s ease-in-out;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: #f8f9fc;
+    color: #5a5c69;
+    line-height: 1.6;
+  }
+
+  /* Card Styles */
+  .card {
+    border: none;
+    border-radius: 0.35rem;
+    box-shadow: var(--shadow);
+    margin-bottom: 1.5rem;
+    transition: var(--transition);
+  }
+
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1.5rem rgba(58, 59, 69, 0.2);
+  }
+
+  .card-header {
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+    padding: 1rem 1.35rem;
+    border-radius: 0.35rem 0.35rem 0 0 !important;
+    font-weight: 600;
+  }
+
+  /* Stats Cards */
+  .stat-card {
+    border-left: 0.25rem solid;
+    transition: var(--transition);
+  }
+
+  .stat-card:hover {
+    transform: translateY(-3px);
+  }
+
+  .stat-card.primary {
+    border-left-color: var(--primary-color);
+  }
+
+  .stat-card.success {
+    border-left-color: var(--success-color);
+  }
+
+  .stat-card.warning {
+    border-left-color: var(--warning-color);
+  }
+
+  .stat-card.info {
+    border-left-color: var(--info-color);
+  }
+
+  .stat-card h6 {
+    color: var(--secondary-color);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+  }
+
+  .stat-card h4 {
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+  }
+
+  .stat-card .change {
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+  }
+
+  .stat-card .change.up {
+    color: var(--success-color);
+  }
+
+  .stat-card .change.down {
+    color: var(--danger-color);
+  }
+
+  /* Table Styles */
+  .table-responsive {
+    border-radius: 0.35rem;
+    overflow: hidden;
+  }
+
+  .table {
+    margin-bottom: 0;
+    color: var(--dark-color);
+    font-size: 0.9rem;
+  }
+
+  .table thead th {
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.65rem;
+    letter-spacing: 0.05rem;
+    padding: 0.75rem 1rem;
+    vertical-align: middle;
+    border: none;
+  }
+
+  .table tbody td {
+    padding: 0.75rem 1rem;
+    vertical-align: middle;
+    border-top: 1px solid #e3e6f0;
+  }
+
+  .table-hover tbody tr:hover {
+    background-color: rgba(78, 115, 223, 0.05);
+  }
+
+  /* Badge Styles */
+  .badge {
+    font-weight: 600;
+    padding: 0.35em 0.65em;
+    font-size: 0.75em;
+    letter-spacing: 0.05em;
+  }
+
+  .badge-primary {
+    background-color: var(--primary-color);
+  }
+
+  .badge-success {
+    background-color: var(--success-color);
+  }
+
+  .badge-danger {
+    background-color: var(--danger-color);
+  }
+
+  .badge-warning {
+    background-color: var(--warning-color);
+    color: #1f2d3d;
+  }
+
+  .badge-info {
+    background-color: var(--info-color);
+  }
+
+  .badge-secondary {
+    background-color: var(--secondary-color);
+  }
+
+  /* Button Styles */
+  .btn {
+    font-weight: 600;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.35rem;
+    transition: var(--transition);
+    font-size: 0.8rem;
+  }
+
+  .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    min-width: 30px;
+  }
+
+  .btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+  }
+
+  .btn-primary:hover {
+    background-color: #2e59d9;
+    border-color: #2653d4;
+  }
+
+  .btn-outline-primary {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+  }
+
+  .btn-outline-primary:hover {
+    background-color: var(--primary-color);
+    color: white;
+  }
+
+  .btn-success {
+    background-color: var(--success-color);
+    border-color: var(--success-color);
+  }
+
+  .btn-success:hover {
+    background-color: #17a673;
+    border-color: #169b6b;
+  }
+
+  .btn-danger {
+    background-color: var(--danger-color);
+    border-color: var(--danger-color);
+  }
+
+  .btn-danger:hover {
+    background-color: #d62c1a;
+    border-color: #cc2a19;
+  }
+
+  .btn-warning {
+    background-color: var(--warning-color);
+    border-color: var(--warning-color);
+    color: #1f2d3d;
+  }
+
+  .btn-warning:hover {
+    background-color: #e0b12d;
+    border-color: #d9aa2b;
+    color: #1f2d3d;
+  }
+
+  .btn-outline-warning {
+    color: var(--warning-color);
+    border-color: var(--warning-color);
+  }
+
+  .btn-outline-warning:hover {
+    background-color: var(--warning-color);
+    color: #1f2d3d;
+  }
+
+  .btn-outline-danger {
+    color: var(--danger-color);
+    border-color: var(--danger-color);
+  }
+
+  .btn-outline-danger:hover {
+    background-color: var(--danger-color);
+    color: white;
+  }
+
+  /* Form Styles */
+  .form-control, .form-select {
+    border: 1px solid #d1d3e2;
+    border-radius: 0.35rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.85rem;
+    transition: var(--transition);
+  }
+
+  .form-control:focus, .form-select:focus {
+    border-color: #bac8f3;
+    box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+  }
+
+  .form-label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+    color: var(--dark-color);
+  }
+
+  /* Modal Styles */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition);
+    overflow-y: auto;
+    padding: 1rem;
+  }
+
+  .modal-overlay.show {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .modal-content {
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 800px;
+    transform: translateY(-20px);
+    transition: var(--transition);
+  }
+
+  .modal-overlay.show .modal-content {
+    transform: translateY(0);
+  }
+
+  .modal-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e3e6f0;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 0.5rem 0.5rem 0 0;
+  }
+
+  .modal-title {
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .btn-close {
+    background-color:rgb(255, 255, 255);
+    color: white;
+    opacity: 0.8;
+    transition: var(--transition);
+    padding: 0.5rem;
+    margin: -0.5rem -0.5rem -0.5rem auto;
+  }
+
+  .btn-close:hover {
+    background-color:rgb(217, 46, 46);
+    opacity: 1;
+    transform: rotate(90deg);
+  }
+
+  .modal-body {
+    padding: 1.5rem;
+  }
+
+  /* Product Image */
+  .product-img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 0.25rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  }
+
+  /* Scrollbar Styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
+
+  /* Responsive Adjustments */
+  @media (max-width: 768px) {
+    .table-responsive {
+      border: 1px solid #e3e6f0;
+    }
+    
+    .table thead {
+      display: none;
+    }
+    
+    .table, .table tbody, .table tr, .table td {
+      display: block;
+      width: 100%;
+      padding: 0.5rem;
+      vertical-align: middle;
+    }
+    
+    .table tr {
+      margin-bottom: 1rem;
+      border: 1px solid #e3e6f0;
+      border-radius: 0.35rem;
+    }
+    
+    .table td {
+      text-align: right;
+      padding-left: 50%;
+      position: relative;
+      border-top: 1px solid #e3e6f0;
+      border-bottom: none;
+    }
+    
+    .table td::before {
+      content: attr(data-label);
+      position: absolute;
+      left: 1rem;
+      width: calc(50% - 1rem);
+      padding-right: 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--primary-color);
+    }
+    
+    .table td:first-child {
+      border-top: none;
+    }
+    
+    .table td:last-child {
+      border-bottom: none;
+    }
+    
+    .table td .btn-group {
+      justify-content: flex-end;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .stat-card {
+      margin-bottom: 1rem;
+    }
+    
+    .modal-body {
+      padding: 1rem;
+    }
+    
+    .btn-group {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .btn-group .btn {
+      width: 100%;
+    }
+  }
+
+  /* Animation */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  /* Improved Mobile Responsiveness */
+ @media (max-width: 576px) {
+   /* Stats Cards */
+   .stat-card {
+     margin-bottom: 1rem;
+   }
+   
+   .stat-card h4 {
+     font-size: 1.25rem;
+   }
+   
+   .stat-card h6 {
+     font-size: 0.7rem;
+   }
+   
+   .stat-card .change {
+     font-size: 0.65rem;
+   }
+ 
+   /* Table Improvements */
+   .table-responsive {
+     border: 1px solid #e3e6f0;
+   }
+   
+   .table thead {
+     display: none;
+   }
+   
+   .table, .table tbody, .table tr, .table td {
+     display: block;
+     width: 100%;
+   }
+   
+   .table tr {
+     margin-bottom: 1rem;
+     border: 1px solid #e3e6f0;
+     border-radius: 0.35rem;
+   }
+   
+   .table td {
+     text-align: right;
+     padding-left: 50%;
+     position: relative;
+     border-top: 1px solid #e3e6f0;
+     border-bottom: none;
+   }
+   
+   .table td::before {
+     content: attr(data-label);
+     position: absolute;
+     left: 1rem;
+     width: calc(50% - 1rem);
+     padding-right: 1rem;
+     text-align: left;
+     font-weight: 600;
+     color: var(--primary-color);
+   }
+   
+   .table td:first-child {
+     border-top: none;
+   }
+   
+   .table td:last-child {
+     border-bottom: none;
+   }
+ 
+   /* Action Buttons */
+   .action-buttons {
+     flex-direction: column;
+     gap: 0.5rem;
+   }
+   
+   .action-buttons .btn {
+     width: 100%;
+     margin-right: 0;
+     text-align: center;
+     justify-content: center;
+   }
+ 
+   /* Card Header */
+   .card-header {
+     flex-direction: column;
+     align-items: flex-start;
+     gap: 0.5rem;
+   }
+ 
+   /* Modal Adjustments */
+   .modal-content {
+     margin: 0.5rem;
+     width: calc(100% - 1rem);
+   }
+   
+   .modal-body {
+     padding: 1rem;
+   }
+   
+   .form-control, .form-select {
+     font-size: 0.8rem;
+   }
+ 
+   /* Pagination */
+   .pagination {
+     flex-wrap: wrap;
+     justify-content: center;
+     gap: 0.25rem;
+   }
+   }
+   .fixed-size-container {
+    height: 500px; /* Fixed height */
+    overflow-y: auto; /* Vertical scrolling */
+    display: block;
+  }
+  
+  /* Optional: Make the table header sticky */
+  .fixed-size-container thead th {
+    position: sticky;
+    top: 0;
+    background-color: #1f2d3d;; /* Match your table header background */
+    z-index: 10;
+  }
+  
+  /* Optional: Style the scrollbar */
+  .fixed-size-container::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .fixed-size-container::-webkit-scrollbar-track {
+    background: #1f2d3d;
+  }
+  
+  .fixed-size-container::-webkit-scrollbar-thumb {
+    background: ##1f2d3d;
+    border-radius: 4px;
+  }
+  
+  .fixed-size-container::-webkit-scrollbar-thumb:hover {
+    background: #1f2d3d;
+  }
+
+  /* Add this to your existing styles */
+  #bulkActionPanel {
+    transition: all 0.3s ease;
+  }
+  
+  /* Make sure the bulk panel stays above the sticky header */
+  #bulkActionPanel {
+    z-index: 20;
+    position: relative;
+  }
+</style>
+<!-- CSS for charts-->
+<style>
+  /* Base Styles */
+  .chart-container {
+    position: relative;
+    width: 100%;
+    height: 300px; /* Fixed height */
+    min-height: 300px;
+  }
+  
+  .chart-container canvas {
+    display: block;
+    width: 100% !important;
+    height: auto !important;
+    max-height: 100%;
+  }
+
+  /* Card Improvements */
+  .metric-card {
+    transition: all 0.3s ease;
+    border-radius: 0.5rem;
+  }
+  
+  .metric-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+  }
+
+  .progress {
+    height: 6px;
+    border-radius: 3px;
+  }
+
+  /* Header Adjustments */
+  .card-header {
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+  }
+
+  /* List Group Items */
+  .list-group-item {
+    border-left: 0;
+    border-right: 0;
+    padding: 0.75rem 0;
+  }
+
+  /* Badge Improvements */
+  .badge-indicator {
+    width: 12px;
+    height: 12px;
+    display: inline-block;
+    border-radius: 50%;
+  }
+
+  /* Responsive Breakpoints */
+  @media (max-width: 575.98px) {
+    .chart-container {
+      min-height: 220px;
+      min-height: 220px;
+    }
+    .card-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+    .dropdown {
+      width: 100%;
+    }
+    .btn-group {
+      flex-wrap: wrap;
+    }
+    .metric-value {
+      font-size: 1.4rem;
+    }
+  }
+
+  @media (min-width: 576px) and (max-width: 767.98px) {
+    .chart-container {
+      min-height: 250px;
+      min-height: 250px;
+    }
+
+    /* Force legend to bottom on mobile */
+    .chartjs-legend {
+      position: relative !important;
+      text-align: center !important;
+      margin-top: 15px !important;
+    }
+  }
+
+  @media (min-width: 768px) and (max-width: 991.98px) {
+    .chart-container {
+      min-height: 280px;
+    }
+    .col-lg-4, .col-lg-8 {
+      margin-bottom: 1rem;
+    }
+  }
+
+  @media (min-width: 992px) and (max-width: 1199.98px) {
+    .chart-container {
+      min-height: 320px;
+    }
+  }
+
+  @media (min-width: 1200px) {
+    .chart-container {
+      min-height: 350px;
+    }
+  }
+
+  /* Special Cases */
+  @media (max-width: 991.98px) and (orientation: landscape) {
+    .chart-container {
+      min-height: 220px;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .chart-container {
+      min-height: 200px;
+    }
+    .card-body {
+      padding: 0.75rem;
+    }
+    .metric-value {
+      font-size: 1.3rem;
+    }
+  }
+
+  @media (max-height: 500px) {
+    .chart-container {
+      min-height: 180px !important;
+    }
+  }
+
+  /* Animation for loading */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .card {
+    animation: fadeIn 0.5s ease-out;
+  }
+</style>
+<!-- Css for Order View Details Modal -->
+<style>
+  /* Card Sticky Header System */
+  .fixed-height-card {
+    display: flex;
+    flex-direction: column;
+    height: 300px; /* Fixed height for all cards */
+  }
+
+  .sticky-card-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: white;
+    border-bottom: 1px solid #e3e6f0;
+    padding: 1rem 1.35rem;
+  }
+
+  .scrollable-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+  }
+
+  /* Table-specific styles */
+  .sticky-table-header {
+    position: sticky;
+    top: -1px; /* Aligns with card header */
+    z-index: 3;
+    background-color: var(--primary-color);
+    color: white;
+  }
+
+  /* Timeline styles */
+  .timeline {
+    position: relative;
+    padding-left: 1rem;
+    list-style: none;
+  }
+
+  .timeline-item {
+    position: relative;
+    padding-bottom: 1.5rem;
+  }
+
+  .timeline-badge {
+    position: absolute;
+    left: -1.75rem;
+    top: 0;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    z-index: 1;
+  }
+
+  .timeline-content {
+    padding-left: 1rem;
+  }
+
+  .timeline-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: -1.25rem;
+    top: 1rem;
+    height: 100%;
+    width: 2px;
+    background: #e3e6f0;
+  }
+
+  /* Modal specific adjustments */
+  .modal-content {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .modal-body {
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* Sticky footer */
+  .sticky-bottom {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    background: white;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+  }
+
+  /* Custom scrollbar - matches your existing */
+  .scrollable-content::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollable-content::-webkit-scrollbar-thumb {
+    background-color: var(--secondary-color);
+    border-radius: 3px;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .fixed-height-card {
+      height: auto;
+      max-height: 300px;
+    }
+    
+    .row {
+      flex-direction: column;
+    }
+    
+    .col-md-6 {
+      width: 100%;
+    }
+  }
+</style>
+  
+
+<div class="container-fluid py-4 fade-in">
+  <!-- Dashboard Overview -->
+  <div class="container-fluid py-4">
+    <div class="card mb-4 shadow-sm" id="dashboard-overview">
+      <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <div>
+          <h5 class="mb-0">
+            <i class="fas fa-tachometer-alt me-2"></i>Dashboard Overview
+          </h5>
+          <p class="text-muted mb-0 small">Welcome back! Here's what's happening with your store today.</p>
+        </div>
+        <div class="dropdown">
+          <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            <i class="fas fa-calendar-alt me-1"></i>Last 30 Days
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="#"><i class="far fa-clock me-2"></i>Last 7 Days</a></li>
+            <li><a class="dropdown-item" href="#"><i class="far fa-calendar me-2"></i>Last 30 Days</a></li>
+            <li><a class="dropdown-item" href="#"><i class="far fa-calendar-alt me-2"></i>This Month</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#"><i class="fas fa-sliders-h me-2"></i>Custom Range</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="card-body">
+        <!-- Metrics Row -->
+        <div class="row mb-4 g-3">
+          <div class="col-md-6 col-lg-3">
+            <div class="metric-card card border-0 bg-light p-3 h-100">
+              <div class="d-flex justify-content-between">
+                <div class="text-muted small">Total Orders</div>
+                <span class="badge bg-primary bg-opacity-10 text-primary small">Today</span>
+              </div>
+              <div class="d-flex align-items-end mt-2">
+                <h4 class="mb-0 me-2">1,245</h4>
+                <span class="text-success small">
+                  <i class="fas fa-arrow-up me-1"></i>12.5%
+                </span>
+              </div>
+              <div class="text-muted small mt-1">vs 1,107 last week</div>
+            </div>
+          </div>
+          
+          <div class="col-md-6 col-lg-3">
+            <div class="metric-card card border-0 bg-light p-3 h-100">
+              <div class="text-muted small mb-2">Revenue</div>
+              <h4 class="mb-1">$56,230</h4>
+              <div class="d-flex justify-content-between small">
+                <span class="text-success">
+                  <i class="fas fa-arrow-up me-1"></i>8.2% MTD
+                </span>
+                <span class="text-muted">$51,900 last month</span>
+              </div>
+              <div class="progress mt-2">
+                <div class="progress-bar bg-success" style="width: 72%"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-6 col-lg-3">
+            <div class="metric-card card border-0 bg-light p-3 h-100">
+              <div class="text-muted small mb-2">Conversion Rate</div>
+              <h4 class="mb-1">3.2%</h4>
+              <div class="d-flex justify-content-between small">
+                <span class="text-success">
+                  <i class="fas fa-arrow-up me-1"></i>0.4%
+                </span>
+                <span class="text-muted">2.8% last month</span>
+              </div>
+              <div class="progress mt-2">
+                <div class="progress-bar bg-info" style="width: 65%"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-6 col-lg-3">
+            <div class="metric-card card border-0 bg-light p-3 h-100">
+              <div class="text-muted small mb-2">Avg. Order Value</div>
+              <h4 class="mb-1">$45.12</h4>
+              <div class="d-flex justify-content-between small">
+                <span class="text-success">
+                  <i class="fas fa-arrow-up me-1"></i>$2.31
+                </span>
+                <span class="text-muted">$42.81 last month</span>
+              </div>
+              <div class="progress mt-2">
+                <div class="progress-bar bg-warning" style="width: 58%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Main Charts Row -->
+        <div class="row g-3 mb-4">
+          <div class="col-lg-8">
+            <div class="card border-0 h-100 shadow-sm">
+              <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0">Sales Performance</h6>
+                <div class="btn-group btn-group-sm">
+                  <button class="btn btn-outline-primary active">Daily</button>
+                  <button class="btn btn-outline-primary">Weekly</button>
+                  <button class="btn btn-outline-primary">Monthly</button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="chart-container">
+                  <canvas id="salesChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-lg-4">
+            <div class="card border-0 h-100 shadow-sm">
+              <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0">Revenue Sources</h6>
+                <a href="#" class="btn btn-sm btn-outline-secondary">Details</a>
+              </div>
+              <div class="card-body">
+                <div class="chart-container">
+                  <canvas id="revenueChart"></canvas>
+                </div>
+                <div class="mt-3">
+                  <div class="d-flex align-items-center mb-2">
+                    <span class="badge-indicator bg-primary me-2"></span>
+                    <span class="small">Direct Sales</span>
+                    <span class="ms-auto fw-bold">$28,400</span>
+                  </div>
+                  <div class="d-flex align-items-center mb-2">
+                    <span class="badge-indicator bg-success me-2"></span>
+                    <span class="small">Affiliate</span>
+                    <span class="ms-auto fw-bold">$12,750</span>
+                  </div>
+                  <div class="d-flex align-items-center">
+                    <span class="badge-indicator bg-warning me-2"></span>
+                    <span class="small">Marketplace</span>
+                    <span class="ms-auto fw-bold">$15,080</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Secondary Charts Row -->
+        <div class="row g-3">
+          <div class="col-lg-4">
+            <div class="card border-0 h-100 shadow-sm">
+              <div class="card-header bg-white border-0 py-3">
+                <h6 class="mb-0">Traffic Sources</h6>
+              </div>
+              <div class="card-body">
+                <div class="chart-container" style="min-height: 250px;">
+                  <canvas id="trafficChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-lg-4">
+            <div class="card border-0 h-100 shadow-sm">
+              <div class="card-header bg-white border-0 py-3">
+                <h6 class="mb-0">Customer Acquisition</h6>
+              </div>
+              <div class="card-body">
+                <div class="chart-container" style="min-height: 250px;">
+                  <canvas id="funnelChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-lg-4">
+            <div class="card border-0 h-100 shadow-sm">
+              <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0">Top Products</h6>
+                <a href="#" class="btn btn-sm btn-outline-secondary">View All</a>
+              </div>
+              <div class="card-body">
+                <div class="list-group list-group-flush">
+                  <div class="list-group-item px-0 py-2 d-flex align-items-center">
+                    <span class="badge bg-primary bg-opacity-10 text-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">1</span>
+                    <div class="flex-grow-1">
+                      <h6 class="mb-1">Wireless Earbuds Pro</h6>
+                      <small class="text-muted">142 sold • $12,450 revenue</small>
+                    </div>
+                    <span class="badge bg-success bg-opacity-10 text-success">+12%</span>
+                  </div>
+                  <div class="list-group-item px-0 py-2 d-flex align-items-center">
+                    <span class="badge bg-primary bg-opacity-10 text-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">2</span>
+                    <div class="flex-grow-1">
+                      <h6 class="mb-1">Smart Watch X3</h6>
+                      <small class="text-muted">98 sold • $8,750 revenue</small>
+                    </div>
+                    <span class="badge bg-success bg-opacity-10 text-success">+8%</span>
+                  </div>
+                  <div class="list-group-item px-0 py-2 d-flex align-items-center">
+                    <span class="badge bg-primary bg-opacity-10 text-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">3</span>
+                    <div class="flex-grow-1">
+                      <h6 class="mb-1">Bluetooth Speaker</h6>
+                      <small class="text-muted">76 sold • $5,320 revenue</small>
+                    </div>
+                    <span class="badge bg-danger bg-opacity-10 text-danger">-3%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Orders Table -->
+  <div class="card mb-4" id="order-list">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Orders</h5>
+      <div>
+        <button class="btn btn-sm btn-outline-primary me-2">
+          <i class="fas fa-download me-1"></i> Export
+        </button>
+        <button class="btn btn-sm btn-primary">
+          <i class="fas fa-plus me-1"></i> New Order
+        </button>
+      </div>
+    </div>
+    <!-- Enhanced Search and Filter Panel -->
+    <div class="bg-light p-3 border-bottom">
+      <div class="row g-3 align-items-end">
+        <!-- Search Section -->
+        <div class="col-md-4">
+          <label class="form-label small fw-bold text-muted mb-1">Search Orders</label>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+            <input type="text" class="form-control" placeholder="Customer or City">
+            <button class="btn btn-outline-secondary" type="button">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Filter Section -->
+        <div class="col-md-8">
+          <div class="row g-2">
+            <div class="col">
+              <label class="form-label small fw-bold text-muted mb-1">Delivery Status</label>
+              <select class="form-select form-select-sm">
+                <option value="" selected>All Statuses</option>
+                <option>Pending</option>
+                <option>In Transit</option>
+                <option>Delivered</option>
+                <option>Cancelled</option>
+              </select>
+            </div>
+            
+            <div class="col">
+              <label class="form-label small fw-bold text-muted mb-1">Payment Status</label>
+              <select class="form-select form-select-sm">
+                <option value="" selected>All Statuses</option>
+                <option>Paid</option>
+                <option>Pending</option>
+                <option>Refunded</option>
+                <option>Failed</option>
+              </select>
+            </div>
+            
+            <div class="col">
+              <label class="form-label small fw-bold text-muted mb-1">Order Status</label>
+              <select class="form-select form-select-sm">
+                <option value="" selected>All Statuses</option>
+                <option>Processing</option>
+                <option>Completed</option>
+                <option>Cancelled</option>
+                <option>Shipped</option>
+              </select>
+            </div>
+            
+            <div class="col">
+              <label class="form-label small fw-bold text-muted mb-1">Date Range</label>
+              <div class="input-group input-group-sm">
+                <input type="date" class="form-control" placeholder="From">
+                <span class="input-group-text bg-white">to</span>
+                <input type="date" class="form-control" placeholder="To">
+              </div>
+            </div>
+            
+            <div class="col-auto d-flex align-items-end">
+              <button class="btn btn-sm btn-primary me-2">
+                <i class="fas fa-filter me-1"></i> Apply
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" title="Reset all filters">
+                <i class="fas fa-redo me-1"></i> Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Bulk Action Panel (hidden by default) -->
+    <div id="ordersBulkPanel" class="bg-light p-3 border-bottom" style="display: none;">
+      <div class="d-flex align-items-center">
+        <span class="me-3" id="ordersSelectedCount">0 orders selected</span>
+        <div class="btn-group">
+          <button class="btn btn-sm btn-outline-danger">
+            <i class="fas fa-trash me-1"></i> Delete Orders
+          </button>
+          <button class="btn btn-sm btn-outline-success">
+            <i class="fas fa-truck me-1"></i> Mark as Shipped
+          </button>
+        </div>
+        <button class="btn btn-sm btn-link text-danger clear-orders-selection">
+          <i class="fas fa-times me-1"></i> Clear
+        </button>
+      </div>
+    </div>
+    <!-- Order List Table -->
+    <div class="card-body p-0">
+      <div class="table-responsive fixed-size-container">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th width="40"><input type="checkbox" id="selectAllOrders" class="form-check-input"></th>
+              <th>Order ID</th>
+              <th>Customer Name</th>
+              <th>Order Date</th>
+              <th>Order Status</th>
+              <th>Total Amount</th>
+              <th>Payment Status</th>
+              <th>Items Count</th>
+              <th>Shipping City</th>
+              <th>Delivery Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Row 1 -->
+            <tr>
+              <td><input type="checkbox" class="form-check-input order-row-checkbox"></td>
+              <td class="fw-bold text-primary">ORD-10025</td>
+              <td>John Smith</td>
+              <td>2023-05-15</td>
+              <td><span class="badge bg-primary">Processing</span></td>
+              <td>$125.99</td>
+              <td><span class="badge bg-success">Paid</span></td>
+              <td>3</td>
+              <td>New York</td>
+              <td><span class="badge bg-warning">Pending</span></td>
+              <td class="action-buttons">
+                <div class="d-flex gap-2 flex-wrap w-100">
+                  <button class="btn btn-sm btn-outline-primary"id="viewOrderDetails">
+                    <i class="fas fa-eye me-1"></i> View Details
+                  </button>
+                  <button class="btn btn-sm btn-outline-warning">
+                    <i class="fas fa-edit me-1"></i> Update
+                  </button>
+                </div>
+              </td>
+            </tr>
+          
+            <!-- Row 2 -->
+            <tr>
+              <td><input type="checkbox" class="form-check-input order-row-checkbox"></td>
+              <td class="fw-bold text-primary">ORD-10026</td>
+              <td>Sarah Johnson</td>
+              <td>2023-05-16</td>
+              <td><span class="badge bg-success">Completed</span></td>
+              <td>$89.50</td>
+              <td><span class="badge bg-success">Paid</span></td>
+              <td>2</td>
+              <td>Los Angeles;llsd;ljf lj ksad;skdf l;j;lsdf lkl;sd fl;ksl;ajf </td>
+              <td><span class="badge bg-success">Delivered</span></td>
+              <td class="action-buttons">
+                <div class="d-flex gap-2 flex-wrap w-100">
+                  <button class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-eye me-1"></i> View Details
+                  </button>
+                  <button class="btn btn-sm btn-outline-warning">
+                    <i class="fas fa-edit me-1"></i> Update
+                  </button>
+                </div>
+              </td>
+            </tr>
+          
+            <!-- Row 3 -->
+            <tr>
+              <td><input type="checkbox" class="form-check-input order-row-checkbox"></td>
+              <td class="fw-bold text-primary">ORD-10027</td>
+              <td>Michael Brown</td>
+              <td>2023-05-17</td>
+              <td><span class="badge bg-danger">Cancelled</span></td>
+              <td>$210.75</td>
+              <td><span class="badge bg-secondary">Refunded</span></td>
+              <td>5</td>
+              <td>Chicago</td>
+              <td><span class="badge bg-secondary">Cancelled</span></td>
+              <td class="action-buttons">
+                <div class="d-flex gap-2 flex-wrap w-100">
+                  <button class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-eye me-1"></i> View Details
+                  </button>
+                  <button class="btn btn-sm btn-outline-warning">
+                    <i class="fas fa-edit me-1"></i> Update
+                  </button>
+                </div>
+              </td>
+            </tr>
+          
+            <!-- Row 4 -->
+            <tr>
+              <td><input type="checkbox" class="form-check-input order-row-checkbox"></td>
+              <td class="fw-bold text-primary">ORD-10028</td>
+              <td>Emily Wilson</td>
+              <td>2023-05-18</td>
+              <td><span class="badge bg-info">Shipped</span></td>
+              <td>$156.30</td>
+              <td><span class="badge bg-success">Paid</span></td>
+              <td>4</td>
+              <td>Houston</td>
+              <td><span class="badge bg-info">In Transit</span></td>
+              <td class="action-buttons">
+                <div class="d-flex gap-2 flex-wrap w-100">
+                  <button class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-eye me-1"></i> View Details
+                  </button>
+                  <button class="btn btn-sm btn-outline-warning">
+                    <i class="fas fa-edit me-1"></i> Update
+                  </button>
+                </div>
+              </td>
+            </tr>
+          
+            <!-- Row 5 -->
+            <tr>
+              <td><input type="checkbox" class="form-check-input order-row-checkbox"></td>
+              <td class="fw-bold text-primary">ORD-10029</td>
+              <td>David Lee</td>
+              <td>2023-05-19</td>
+              <td><span class="badge bg-primary">Processing</span></td>
+              <td>$75.20</td>
+              <td><span class="badge bg-warning">Pending</span></td>
+              <td>1</td>
+              <td>Phoenix</td>
+              <td><span class="badge bg-warning">Pending</span></td>
+              <td class="action-buttons">
+                <div class="d-flex gap-2 flex-wrap w-100">
+                  <button class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-eye me-1"></i> View Details
+                  </button>
+                  <button class="btn btn-sm btn-outline-warning">
+                    <i class="fas fa-edit me-1"></i> Update
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Row 6 -->
+            <tr>
+              <td><input type="checkbox" class="form-check-input order-row-checkbox"></td>
+              <td class="fw-bold text-primary">ORD-10027</td>
+              <td>Michael Brown</td>
+              <td>2023-05-17</td>
+              <td><span class="badge bg-danger">Cancelled</span></td>
+              <td>$210.75</td>
+              <td><span class="badge bg-secondary">Refunded</span></td>
+              <td>5</td>
+              <td>Chicago</td>
+              <td><span class="badge bg-secondary">Cancelled</span></td>
+              <td class="action-buttons">
+                <div class="d-flex gap-2 flex-wrap w-100">
+                  <button class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-eye me-1"></i> View Details
+                  </button>
+                  <button class="btn btn-sm btn-outline-warning">
+                    <i class="fas fa-edit me-1"></i> Update
+                  </button>
+                </div>
+              </td>
+            </tr>
+          
+            <!-- Row 7 -->
+            <tr>
+              <td><input type="checkbox" class="form-check-input order-row-checkbox"></td>
+              <td class="fw-bold text-primary">ORD-10028</td>
+              <td>Emily Wilson</td>
+              <td>2023-05-18</td>
+              <td><span class="badge bg-info">Shipped</span></td>
+              <td>$156.30</td>
+              <td><span class="badge bg-success">Paid</span></td>
+              <td>4</td>
+              <td>Houston</td>
+              <td><span class="badge bg-info">In Transit</span></td>
+              <td class="action-buttons">
+                <div class="d-flex gap-2 flex-wrap w-100">
+                  <button class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-eye me-1"></i> View Details
+                  </button>
+                  <button class="btn btn-sm btn-outline-warning">
+                    <i class="fas fa-edit me-1"></i> Update
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+      <div class="small text-muted">Showing 1 to 3 of 24 entries</div>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item disabled">
+            <a class="page-link" href="#" tabindex="-1">Previous</a>
+          </li>
+          <li class="page-item active"><a class="page-link" href="#">1</a></li>
+          <li class="page-item"><a class="page-link" href="#">2</a></li>
+          <li class="page-item"><a class="page-link" href="#">3</a></li>
+          <li class="page-item">
+            <a class="page-link" href="#">Next</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Order View Details Modal -->
+  <div class="modal-overlay" id="orderViewModel">
+    <div class="modal-content" style="max-width: 900px; max-height: 90vh;">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fas fa-shopping-bag me-2"></i> Order Details - #ORD-10025</h5>
+        <button type="button" class="btn-close ms-auto" id="closeBtn"></button>
+      </div>
+      <div class="modal-body" style="overflow-y: auto;">
+        <div class="row gx-3">
+          <!-- Left Column - Customer & Order Info -->
+          <div class="col-md-6">
+            <!-- Customer Information Card -->
+            <div class="card mb-3 fixed-size-container">
+              <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-user me-2"></i>Customer Information</h6>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-12">
+                    <h6 class="fw-bold">John Doe</h6>
+                    <p class="mb-1"><i class="fas fa-envelope me-1"></i> john.doe@example.com</p>
+                    <p class="mb-1"><i class="fas fa-phone me-1"></i> (123) 456-7890</p>
+                  </div>
+                  <div class="col-12">
+                    <hr>
+                    <h6 class="fw-bold"><i class="fas fa-truck me-1"></i> Shipping Address</h6>
+                    <p class="mb-0">
+                      123 Main St, Apt 4B<br>
+                      New York, NY 10001<br>
+                      United States
+                    </p>
+                  </div>
+                  <div class="col-12 mt-3">
+                    <div class="d-flex justify-content-between">
+                      <span><i class="fas fa-calendar-alt me-1"></i> Customer Since:</span>
+                      <span class="fw-bold">Jan 15, 2022</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                      <span><i class="fas fa-shopping-cart me-1"></i> Total Orders:</span>
+                      <span class="fw-bold">8</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                      <span><i class="fas fa-dollar-sign me-1"></i> Lifetime Value:</span>
+                      <span class="fw-bold">$1,245.75</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+  
+            <!-- Order Summary Card -->
+            <div class="card mb-3">
+              <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-receipt me-2"></i>Order Summary</h6>
+              </div>
+              <div class="card-body">
+                <div class="row g-2">
+                  <div class="col-12 d-flex justify-content-between">
+                    <span>Subtotal (2 items):</span>
+                    <span>$125.99</span>
+                  </div>
+                  <div class="col-12 d-flex justify-content-between">
+                    <span>Shipping:</span>
+                    <span>$8.99</span>
+                  </div>
+                  <div class="col-12 d-flex justify-content-between">
+                    <span>Tax:</span>
+                    <span>$10.75</span>
+                  </div>
+                  <div class="col-12 d-flex justify-content-between">
+                    <span>Discount (SUMMER20):</span>
+                    <span class="text-danger">-$20.00</span>
+                  </div>
+                  <div class="col-12 d-flex justify-content-between border-top pt-2 mt-2">
+                    <span class="fw-bold">Grand Total:</span>
+                    <span class="fw-bold">$125.73</span>
+                  </div>
+                  <div class="col-12 mt-3">
+                    <h6 class="fw-bold"><i class="fas fa-credit-card me-1"></i> Payment Information</h6>
+                    <p class="mb-1">Credit Card (VISA •••• 4242)</p>
+                    <p class="mb-1">Transaction ID: TXN-789456123</p>
+                    <span class="badge bg-success">Paid on May 15, 2023</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+  
+          <!-- Right Column - Order Items & Status -->
+          <div class="col-md-6">
+            <!-- Order Items Card -->
+            <div class="card mb-3 fixed-size-container">
+              <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-boxes me-2"></i>Order Items (3)</h6>
+              </div>
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-sm mb-0">
+                    <thead>
+                      <tr>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th>Price</th>
+                        <th>Qty</th>
+                        <th>Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>
+                          <a href="#" class="fw-bold">Wireless Headphones</a>
+                          <br>
+                          <small class="text-muted">Color: Black | Warranty: 1 Year</small>
+                        </td>
+                        <td>WH-2023-BK</td>
+                        <td>$99.99</td>
+                        <td>1</td>
+                        <td>$99.99</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <a href="#" class="fw-bold">Phone Case</a>
+                          <br>
+                          <small class="text-muted">Model: iPhone 13 | Color: Red</small>
+                        </td>
+                        <td>PC-IP13-RD</td>
+                        <td>$25.00</td>
+                        <td>2</td>
+                        <td>$50.00</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <a href="#" class="fw-bold">Screen Protector</a>
+                          <br>
+                          <small class="text-muted">Model: iPhone 13 | 2-Pack</small>
+                        </td>
+                        <td>SP-IP13-2P</td>
+                        <td>$12.99</td>
+                        <td>1</td>
+                        <td>$12.99</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+  
+            <!-- Status Timeline Card -->
+            <div class="card mb-3">
+              <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-history me-2"></i>Status Timeline</h6>
+              </div>
+              <div class="card-body">
+                <ul class="timeline">
+                  <li class="timeline-item">
+                    <span class="timeline-badge bg-success"></span>
+                    <div class="timeline-content">
+                      <h6 class="mb-1">Order Delivered</h6>
+                      <small class="text-muted">May 18, 2023 - 14:30</small>
+                      <p class="mb-0 small">Delivered to front door. Customer confirmed receipt.</p>
+                    </div>
+                  </li>
+                  <li class="timeline-item">
+                    <span class="timeline-badge bg-info"></span>
+                    <div class="timeline-content">
+                      <h6 class="mb-1">Order Shipped</h6>
+                      <small class="text-muted">May 17, 2023 - 09:15</small>
+                      <p class="mb-0 small">Shipped via USPS Priority Mail. Tracking #: 9400111899561234567890</p>
+                    </div>
+                  </li>
+                  <li class="timeline-item">
+                    <span class="timeline-badge bg-primary"></span>
+                    <div class="timeline-content">
+                      <h6 class="mb-1">Payment Received</h6>
+                      <small class="text-muted">May 15, 2023 - 10:45</small>
+                      <p class="mb-0 small">Payment processed successfully. Transaction ID: TXN-789456123</p>
+                    </div>
+                  </li>
+                  <li class="timeline-item">
+                    <span class="timeline-badge bg-secondary"></span>
+                    <div class="timeline-content">
+                      <h6 class="mb-1">Order Placed</h6>
+                      <small class="text-muted">May 15, 2023 - 10:30</small>
+                      <p class="mb-0 small">Order created through website. IP: 192.168.1.1</p>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <!-- Admin Notes Card -->
+        <div class="card mb-3">
+          <div class="card-header">
+            <h6 class="mb-0"><i class="fas fa-sticky-note me-2"></i>Admin Notes</h6>
+          </div>
+          <div class="card-body">
+            <div class="mb-3 p-2 bg-light rounded">
+              <div class="d-flex justify-content-between">
+                <small class="fw-bold">Customer requested gift wrapping with a birthday message</small>
+                <small class="text-muted">May 15 - 11:20 (Private)</small>
+              </div>
+              <p class="mb-0 small">Note: "Happy Birthday Sarah! - From John"</p>
+            </div>
+            <div class="mb-3 p-2 bg-light rounded">
+              <div class="d-flex justify-content-between">
+                <small class="fw-bold">Delayed shipping due to inventory check</small>
+                <small class="text-muted">May 16 - 14:05 (Public)</small>
+              </div>
+              <p class="mb-0 small">Customer notified via email about 1-day delay</p>
+            </div>
+            <div class="input-group">
+              <textarea class="form-control" placeholder="Add new note..." rows="2"></textarea>
+              <div class="input-group-append">
+                <div class="btn-group">
+                  <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    Private
+                  </button>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#">Private Note</a></li>
+                    <li><a class="dropdown-item" href="#">Public Note</a></li>
+                  </ul>
+                  <button class="btn btn-primary" type="button">Add Note</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <!-- Refund Section -->
+        <div class="card border-danger">
+          <div class="card-header">
+            <h6 class="mb-0"><i class="fas fa-exchange-alt me-2"></i>Refund/Return</h6>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Refund Amount</label>
+                  <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" class="form-control" value="125.73" step="0.01">
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Reason</label>
+                  <select class="form-select">
+                    <option>Customer Changed Mind</option>
+                    <option selected>Defective Product</option>
+                    <option>Wrong Item Shipped</option>
+                    <option>Late Delivery</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="restockItems">
+                    <label class="form-check-label" for="restockItems">
+                      Restock items to inventory
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Additional Notes</label>
+                  <textarea class="form-control" rows="5" placeholder="Enter refund details...">Customer reported defective headphones - right earbud not working. Requested full refund.</textarea>
+                </div>
+              </div>
+            </div>
+            <div class="d-flex justify-content-end gap-2">
+              <button class="btn btn-outline-secondary">
+                <i class="fas fa-print me-1"></i> Print Return Label
+              </button>
+              <button class="btn btn-outline-danger">
+                <i class="fas fa-exchange-alt me-1"></i> Partial Refund
+              </button>
+              <button class="btn btn-danger">
+                <i class="fas fa-undo me-1"></i> Full Refund
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer sticky-bottom bg-white border-top py-3 px-4">
+        <div class="d-flex justify-content-between w-100">
+          <button type="button" class="btn btn-outline-secondary">
+            <i class="fas fa-times me-2"></i> Cancel
+          </button>
+          <div class="d-flex gap-3">
+            <button type="button" class="btn btn-outline-primary">
+              <i class="fas fa-print me-2"></i> Print
+            </button>
+            <button type="button" class="btn btn-primary">
+              <i class="fas fa-save me-2"></i> Save Changes
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <!-- Product List Table with Exact Columns -->
+  <div class="card mb-4" id="product-list">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0"><i class="fas fa-boxes me-2"></i> Product</h5>
+      <button class="btn btn-sm btn-primary" id="productForm">
+        <i class="fas fa-plus me-1"></i> Add Product
+      </button>
+    </div>
+    
+    <!-- Search and Filters Section -->
+    <div class="card-body border-bottom">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label for="productSearch" class="form-label">Search Product Name</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-search"></i></span>
+            <input type="text" class="form-control" id="productSearch" placeholder="Enter product name...">
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label for="categoryFilter" class="form-label">Category</label>
+          <select class="form-select" id="categoryFilter">
+            <option value="" selected>All Categories</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Fitness">Fitness</option>
+            <option value="Home">Home</option>
+            <option value="Clothing">Clothing</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label for="subcategoryFilter" class="form-label">Subcategory</label>
+          <select class="form-select" id="subcategoryFilter">
+            <option value="" selected>All Subcategories</option>
+            <option value="Audio">Audio</option>
+            <option value="Wearables">Wearables</option>
+            <option value="Exercise Equipment">Exercise Equipment</option>
+            <option value="Kitchenware">Kitchenware</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="statusFilter" class="form-label">Status</label>
+          <select class="form-select" id="statusFilter">
+            <option value="" selected>All Status</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+            <option value="Low Stock">Low Stock</option>
+            <option value="Out of Stock">Out of Stock</option>
+          </select>
+        </div>
+        <div class="col-md-12 d-flex justify-content-end gap-2 mt-2">
+          <button class="btn btn-sm btn-primary" id="applyFilters">
+            <i class="fas fa-filter me-1"></i> Apply Filters
+          </button>
+          <button class="btn btn-sm btn-outline-secondary" id="resetFilters">
+            <i class="fas fa-undo me-1"></i> Reset
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="productsBulkPanel" class="bg-light p-3 border-bottom" style="display: none;">
+      <div class="d-flex align-items-center">
+        <span class="me-3" id="productsSelectedCount">0 products selected</span>
+        <div class="btn-group">
+          <button class="btn btn-sm btn-outline-danger">
+            <i class="fas fa-trash me-1"></i> Delete Products
+          </button>
+          <button class="btn btn-sm btn-outline-warning">
+            <i class="fas fa-archive me-1"></i> Archive Products
+          </button>
+        </div>
+        <button class="btn btn-sm btn-link text-danger clear-products-selection">
+          <i class="fas fa-times me-1"></i> Clear
+        </button>
+      </div>
+    </div>
+      <!-- List Table -->
+    <div class="card-body p-0">
+      <div class="table-responsive fixed-size-container">
+        <table class="table table-hover mb-0">
+          <thead>
+          <tr>
+            <th width="40"><input type="checkbox" id="selectAllProducts" class="form-check-input"></th>
+            <th>Product ID / SKU Code</th>
+            <th>Thumbnail</th>
+            <th>Product Name</th>
+            <th>Category</th>
+            <th>Subcategory</th>
+            <th>Price</th>
+            <th>Discounted Price</th>
+            <th>Stock Quantity</th>
+            <th>Status (or Active?)</th>
+            <th>Description</th>
+            <th>Actions</th>
+          </tr>
+          </thead>
+          <tbody>
+          <!-- Row 1 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input product-row-checkbox"></td>
+            <td>SKU-1001</td>
+            <td><img src="https://via.placeholder.com/50" alt="Product" class="product-img"></td>
+            <td class="fw-bold">Wireless Headphones, Bluetooth Headphones</td>
+            <td>Electronics</td>
+            <td>Audio</td>
+            <td>$99.99</td>
+            <td>$79.99</td>
+            <td>150</td>
+            <td><span class="badge bg-success">Active</span></td>
+            <td class="small">Noise-cancelling headphones with 30-hour battery life and Bluetooth 5.0.</td>
+            <td class="action-buttons">
+              <div class="d-flex gap-2 flex-wrap w-100">
+                <button class="btn btn-sm btn-outline-warning" id="editProductBtn">
+                  <i class="fas fa-edit me"></i> Update
+                </button>
+                <button class="btn btn-sm btn-outline-danger" id="deleteProduct">
+                  <i class="fas fa-trash me-1"></i> Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Row 2 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input product-row-checkbox"></td>
+            <td>SKU-1002</td>
+            <td><img src="https://via.placeholder.com/50" alt="Product" class="product-img"></td>
+            <td class="fw-bold">Smart Watch</td>
+            <td>Electronics</td>
+            <td>Wearables</td>
+            <td>$199.99</td>
+            <td>$179.99</td>
+            <td>85</td>
+            <td><span class="badge bg-success">Active</span></td>
+            <td class="small">Fitness tracker with heart rate monitor, GPS, and 7-day battery life.</td>
+            <td class="action-buttons">
+              <div class="d-flex gap-2 flex-wrap w-100">
+                <button class="btn btn-sm btn-outline-warning" id="editProductBtn">
+                  <i class="fas fa-edit me-1"></i> Edit
+                </button>
+                <button class="btn btn-sm btn-outline-danger" id="deleteProduct">
+                  <i class="fas fa-trash me-1"></i> Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 3 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input product-row-checkbox"></td>
+            <td>SKU-1003</td>
+            <td><img src="https://via.placeholder.com/50" alt="Product" class="product-img"></td>
+            <td class="fw-bold">Bluetooth Speaker</td>
+            <td>Electronics</td>
+            <td>Audio</td>
+            <td>$59.99</td>
+            <td>$49.99</td>
+            <td>120</td>
+            <td><span class="badge bg-success">Active</span></td>
+            <td class="small">Portable waterproof speaker with 20-hour battery life and deep bass.</td>
+            <td class="action-buttons">
+              <div class="d-flex gap-2 flex-wrap w-100">
+                <button class="btn btn-sm btn-outline-warning" id="editProductBtn">
+                  <i class="fas fa-edit me-1"></i> Edit
+                </button>
+                <button class="btn btn-sm btn-outline-danger" id="deleteProduct">
+                  <i class="fas fa-trash me-1"></i> Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Row 4 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input product-row-checkbox"></td>
+            <td>SKU-2001</td>
+            <td><img src="https://via.placeholder.com/50" alt="Product" class="product-img"></td>
+            <td class="fw-bold">Yoga Mat</td>
+            <td>Fitness</td>
+            <td>Exercise Equipment</td>
+            <td>$29.99</td>
+            <td>$24.99</td>
+            <td>200</td>
+            <td><span class="badge bg-warning text-dark">Low Stock</span></td>
+            <td class="small">Eco-friendly non-slip yoga mat with carrying strap, 6mm thickness.</td>
+            <td class="action-buttons">
+              <div class="d-flex gap-2 flex-wrap w-100">
+                <button class="btn btn-sm btn-outline-warning" id="editProductBtn">
+                  <i class="fas fa-edit me-1"></i> Edit
+                </button>
+                <button class="btn btn-sm btn-outline-danger" id="deleteProduct">
+                  <i class="fas fa-trash me-1"></i> Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Row 5 -->
+          <tr>
+            <td><input type="checkbox" class="form-check-input product-row-checkbox"></td>
+            <td>SKU-3001</td>
+            <td><img src="https://via.placeholder.com/50" alt="Product" class="product-img"></td>
+            <td class="fw-bold">Stainless Steel Water Bottle</td>
+            <td>Home</td>
+            <td>Kitchenware</td>
+            <td>$24.99</td>
+            <td>$19.99</td>
+            <td>0</td>
+            <td><span class="badge bg-danger">Out of Stock</span></td>
+            <td class="small">Insulated 32oz bottle keeps drinks cold for 24 hours or hot for 12 hours.</td>
+            <td class="action-buttons">
+              <div class="d-flex gap-2 flex-wrap w-100">
+                <button class="btn btn-sm btn-outline-warning" id="editProductBtn">
+                  <i class="fas fa-edit me-1"></i> Edit
+                </button>
+                <button class="btn btn-sm btn-outline-danger" id="deleteProduct">
+                  <i class="fas fa-trash me-1"></i> Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+      <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+      <div class="small text-muted">Showing 1 to 3 of 32 products</div>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item disabled">
+            <a class="page-link" href="#" tabindex="-1">Previous</a>
+          </li>
+          <li class="page-item active"><a class="page-link" href="#">1</a></li>
+          <li class="page-item"><a class="page-link" href="#">2</a></li>
+          <li class="page-item"><a class="page-link" href="#">3</a></li>
+          <li class="page-item">
+            <a class="page-link" href="#">Next</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+  
+  <!-- Product Edit Modal -->
+  <div class="modal-overlay" id="productEditModal">
+  <div class="modal-content" style="max-width: 750px;"> <!-- Reduced from ~800px -->
+    <div class="modal-header py-2"> <!-- Tighter padding -->
+      <h5 class="modal-title fs-5"><i class="fas fa-edit me-1"></i> Edit Product</h5> <!-- Slightly smaller title -->
+      <button type="button" class="btn-close ms-auto" id="productEditCloseBtn"></button>
+    </div>
+    <div class="modal-body p-3"> <!-- Reduced padding -->
+      <form id="productEditForm" enctype="multipart/form-data">
+        <input type="hidden" id="edit_product_id">
+        
+        <div class="row g-2"> <!-- Reduced gutter from g-3 to g-2 -->
+          <!-- Row 1 -->
+          <div class="col-md-6">
+            <label for="edit_product_name" class="form-label">Name*</label>
+            <input type="text" class="form-control" id="edit_product_name" required>
+          </div>
+          <div class="col-md-6">
+            <label for="edit_sku" class="form-label">SKU</label>
+            <input type="text" class="form-control" id="edit_sku" readonly>
+            <small class="text-muted">SKU cannot be changed</small>
+          </div>
+          
+          <!-- Row 2 -->
+          <div class="col-md-6">
+            <label for="edit_price" class="form-label">Price*</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input type="number" class="form-control" id="edit_price" min="0" step="0.01" required>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label for="edit_discounted_price" class="form-label">Discounted Price</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input type="number" class="form-control" id="edit_discounted_price" min="0" step="0.01">
+            </div>
+          </div>
+          
+          <!-- Row 3 -->
+          <div class="col-md-6">
+            <label for="edit_category" class="form-label">Category*</label>
+            <select class="form-select" id="edit_category" required>
+              <option value="">Select Category</option>
+              <option value="Electronics">Electronics</option>
+              <option value="Clothing">Clothing</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label for="edit_quantity" class="form-label">Quantity*</label>
+            <input type="number" class="form-control" id="edit_quantity" min="0" required>
+          </div>
+          <div class="col-md-3">
+            <label for="edit_low_stock_alert" class="form-label">Low Stock</label>
+            <input type="number" class="form-control" id="edit_low_stock_alert" min="1">
+          </div>
+          
+          <!-- Images Section -->
+          <div class="col-12 mt-2"> <!-- Reduced top margin -->
+            <label class="form-label">Images</label>
+            <input type="file" class="form-control" id="edit_product_images" multiple accept="image/*">
+            <div class="current-images mt-2">
+              <div class="d-flex flex-wrap gap-2" id="editCurrentImages">
+                <!-- Thumbnails -->
+              </div>
+            </div>
+          </div>
+          
+          <!-- Variants Section -->
+          <div class="col-12 mt-2"> <!-- Reduced top margin -->
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-light py-2 px-3"> <!-- Tighter padding -->
+                <h6 class="mb-0"><i class="fas fa-list me-1"></i> Variants</h6> <!-- Smaller icon spacing -->
+              </div>
+              <div class="card-body p-2"> <!-- Reduced padding -->
+                <div class="existing-variants mb-2" id="editExistingVariants">
+                  <!-- Existing variants -->
+                </div>
+                <div class="add-variant-interface">
+                  <div class="row g-2"> <!-- Reduced gutter -->
+                    <div class="col-md-3">
+                      <input type="text" class="form-control" placeholder="Type">
+                    </div>
+                    <div class="col-md-3">
+                      <input type="text" class="form-control" placeholder="Value">
+                    </div>
+                    <div class="col-md-3">
+                      <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input type="number" class="form-control" placeholder="+5.00">
+                      </div>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                      <button type="button" class="btn btn-outline-primary">
+                        <i class="fas fa-plus me-1"></i> Add
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Footer -->
+          <div class="col-12 mt-3"> <!-- Slightly reduced top margin -->
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="edit_is_active" checked>
+              <label class="form-check-label" for="edit_is_active">Active Product</label>
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-3"> <!-- Tighter gap -->
+              <button type="button" class="btn btn-outline-secondary" id="editCancelBtn">
+                <i class="fas fa-times me-1"></i> Cancel
+              </button>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-1"></i> Save
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  </div>
+  
+  <!-- Product Add Modal -->
+  <div class="modal-overlay" id="productModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title"><i class="fas fa-plus me-2"></i> Add New Product</h5>
+      <button type="button" class="btn-close ms-auto" id="productCloseBtn"></button>
+    </div>
+    <div class="modal-body">
+      <form enctype="multipart/form-data">
+        <div class="row g-3">
+          <!-- Basic Information -->
+          <div class="col-md-6">
+            <label for="product_name" class="form-label">Name*</label>
+            <input type="text" class="form-control" id="product_name" placeholder="Product name" required>
+          </div>
+          <div class="col-md-6">
+            <label for="sku" class="form-label">SKU*</label>
+            <input type="text" class="form-control" id="sku" name="sku" placeholder="TSHIRT-BLU-101" required>
+            <small id="skuHelp" class="text-muted">
+              Leave blank to auto-generate: <span id="skuSuggestion" class="fw-bold text-primary"></span>
+            </small>
+          </div>
+          
+          <!-- Pricing -->
+          <div class="col-md-6">
+            <label for="price" class="form-label">Price*</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input type="number" class="form-control" id="price" min="0" step="0.01" required>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label for="discounted_price" class="form-label">Discounted</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input type="number" class="form-control" id="discounted_price" min="0" step="0.01">
+            </div>
+          </div>
+          
+          <!-- Category & Status -->
+          <div class="col-md-6">
+            <label for="category" class="form-label">Category*</label>
+            <select class="form-select" id="category" required>
+              <option value="">Select Category</option>
+              <option value="Electronics">Electronics</option>
+              <option value="Clothing">Clothing</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <div class="form-check form-switch pt-4">
+              <input class="form-check-input" type="checkbox" id="is_active" checked>
+              <label class="form-check-label" for="is_active">Active Product</label>
+            </div>
+          </div>
+          
+          <!-- Inventory -->
+          <div class="col-md-6">
+            <label for="initial_quantity" class="form-label">Quantity*</label>
+            <input type="number" class="form-control" id="initial_quantity" min="0" required>
+          </div>
+          <div class="col-md-6">
+            <label for="low_stock_alert" class="form-label">Low Stock</label>
+            <input type="number" class="form-control" id="low_stock_alert" min="1">
+          </div>
+          
+          <!-- Image Upload -->
+          <div class="col-12">
+            <label for="product_images" class="form-label">Images*</label>
+            <input type="file" class="form-control" id="product_images" accept="image/*" multiple required>
+            <small class="text-muted">Max 5 images</small>
+          </div>
+          
+          <!-- Variants Section -->
+          <div class="col-12">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-light py-2">
+                <h6 class="mb-0"><i class="fas fa-list me-2"></i> Variants</h6>
+              </div>
+              <div class="card-body p-2">
+                <div class="row g-2">
+                  <div class="col-md-3">
+                    <input type="text" class="form-control" placeholder="Type (Color)">
+                  </div>
+                  <div class="col-md-3">
+                    <input type="text" class="form-control" placeholder="Value (Red)">
+                  </div>
+                  <div class="col-md-3">
+                    <div class="input-group">
+                      <span class="input-group-text">$</span>
+                      <input type="number" class="form-control" placeholder="+5.00">
+                    </div>
+                  </div>
+                  <div class="col-md-3 d-flex align-items-end">
+                    <button type="button" class="btn btn-sm btn-outline-primary">
+                      <i class="fas fa-plus"></i> Add
+                    </button>
+                  </div>
+                </div>
+                <div class="mt-2" id="variantDisplay">
+                  <small class="text-muted">No variants added</small>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Submit Button -->
+          <div class="col-12">
+            <div class="d-flex justify-content-end gap-2">
+              <button type="button" class="btn btn-outline-secondary">
+                <i class="fas fa-times"></i> Cancel
+              </button>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Save
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  </div>
+</div>
+
+<script> // popup model
+  // Modal toggle functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    // Order Edit Modal
+    const editOrderBtn = document.getElementById('viewOrderDetails');
+    const orderModal = document.getElementById('orderViewModel');
+    const closeOrderModal = document.getElementById('closeBtn');
+    
+    if (editOrderBtn) {
+      editOrderBtn.addEventListener('click', function() {
+        document.body.classList.add('modal-open');
+        orderModal.classList.add('show');
+      });
+    }
+    
+    if (closeOrderModal) {
+      closeOrderModal.addEventListener('click', function() {
+        document.body.classList.remove('modal-open');
+        orderModal.classList.remove('show');
+      });
+    }
+    
+    // Product Edit Modal
+    const editProductBtn = document.getElementById('editProductBtn');
+    const productEditModal = document.getElementById('productEditModal');
+    const closeProductEditModal = document.getElementById('productEditCloseBtn');
+    
+    if (editProductBtn) {
+      editProductBtn.addEventListener('click', function() {
+        document.body.classList.add('modal-open');
+        productEditModal.classList.add('show');
+      });
+    }
+    
+    if (closeProductEditModal) {
+      closeProductEditModal.addEventListener('click', function() {
+        document.body.classList.remove('modal-open');
+        productEditModal.classList.remove('show');
+      });
+    }
+    
+    // Product Add Modal
+    const addProductBtn = document.getElementById('productForm');
+    const productModal = document.getElementById('productModal');
+    const closeProductModal = document.getElementById('productCloseBtn');
+    
+    if (addProductBtn) {
+      addProductBtn.addEventListener('click', function() {
+        document.body.classList.add('modal-open');
+        productModal.classList.add('show');
+      });
+    }
+    
+    if (closeProductModal) {
+      closeProductModal.addEventListener('click', function() {
+        document.body.classList.remove('modal-open');
+        productModal.classList.remove('show');
+      });
+    }
+    
+    // Close modals when clicking outside
+    window.addEventListener('click', function(event) {
+      if (event.target === orderModal) {
+        document.body.classList.remove('modal-open');
+        orderModal.classList.remove('show');
+      }
+      if (event.target === productEditModal) {
+        document.body.classList.remove('modal-open');
+        productEditModal.classList.remove('show');
+      }
+      if (event.target === productModal) {
+        document.body.classList.remove('modal-open');
+        productModal.classList.remove('show');
+      }
+    });
+    
+    // Select all checkboxes Recent Orders and Product Inventory
+    const selectAllOrders = document.getElementById('selectAllOrders');
+    const selectAllProducts = document.getElementById('selectAllProducts');
+    
+    if (selectAllOrders) {
+      selectAllOrders.addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('#order-list .order-row-checkbox');
+        checkboxes.forEach(checkbox => {
+          checkbox.checked = selectAllOrders.checked;
+        });
+      });
+    }
+    
+    if (selectAllProducts) {
+      selectAllProducts.addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('#product-list .product-row-checkbox');
+        checkboxes.forEach(checkbox => {
+          checkbox.checked = selectAllProducts.checked;
+        });
+      });
+    }
+  });
+</script>
+
+<script> // Checkbox Operation
+  document.addEventListener('DOMContentLoaded', function() {
+    // Orders Table Bulk Actions
+    const selectAllOrders = document.getElementById('selectAllOrders');
+    const orderCheckboxes = document.querySelectorAll('.order-row-checkbox');
+    const ordersBulkPanel = document.getElementById('ordersBulkPanel');
+    const ordersSelectedCount = document.getElementById('ordersSelectedCount');
+    
+    // Products Table Bulk Actions
+    const selectAllProducts = document.getElementById('selectAllProducts');
+    const productCheckboxes = document.querySelectorAll('.product-row-checkbox');
+    const productsBulkPanel = document.getElementById('productsBulkPanel');
+    const productsSelectedCount = document.getElementById('productsSelectedCount');
+  
+    // Initialize both tables
+    initBulkActions('order', selectAllOrders, orderCheckboxes, ordersBulkPanel, ordersSelectedCount);
+    initBulkActions('product', selectAllProducts, productCheckboxes, productsBulkPanel, productsSelectedCount);
+  
+    function initBulkActions(type, selectAll, checkboxes, bulkPanel, selectedCount) {
+      // Toggle bulk action panel
+      function toggleBulkPanel() {
+        const checkedCount = document.querySelectorAll(`.${type}-row-checkbox:checked`).length;
+        if (checkedCount > 0) {
+          bulkPanel.style.display = 'block';
+          selectedCount.textContent = `${checkedCount} ${type}s selected`;
+        } else {
+          bulkPanel.style.display = 'none';
+        }
+        
+        // Update "Select All" checkbox state
+        if (selectAll) {
+          selectAll.checked = checkedCount === checkboxes.length && checkboxes.length > 0;
+          selectAll.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
+        }
+      }
+  
+      // Select All functionality
+      if (selectAll) {
+        selectAll.addEventListener('change', function() {
+          checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+          });
+          toggleBulkPanel();
+        });
+      }
+  
+      // Individual checkbox functionality
+      checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', toggleBulkPanel);
+      });
+  
+      // Clear selection
+      document.querySelectorAll(`.clear-${type}s-selection`).forEach(btn => {
+        btn.addEventListener('click', function() {
+          checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+          });
+          if (selectAll) selectAll.checked = false;
+          bulkPanel.style.display = 'none';
+        });
+      });
+    }
+  });
+</script> 
+
+<!-- Chart.js Implementation -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Wait for DOM and all resources to load
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize all charts with responsive settings
+      function initResponsiveChart(chartId, config) {
+        const ctx = document.getElementById(chartId);
+        if (!ctx) return null;
+        
+        // Add responsive defaults
+        const defaultOptions = {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: window.innerWidth < 768 ? 'bottom' : (config.options?.plugins?.legend?.position || 'top'),
+              labels: {
+                boxWidth: 12,
+                padding: 20
+              }
+            },
+            tooltip: {
+              enabled: true,
+              mode: 'index',
+              intersect: false
+            }
+          },
+          interaction: {
+            mode: 'nearest',
+            axis: 'x',
+            intersect: false
+          }
+        };
+        
+        // Merge user options with defaults
+        const mergedOptions = {
+          ...config,
+          options: {
+            ...defaultOptions,
+            ...config.options
+          }
+        };
+        
+        return new Chart(ctx, mergedOptions);
+      }
+
+      // Initialize Sales Chart
+      const salesChart = initResponsiveChart('salesChart', {
+        type: 'line',
+        data: {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+          datasets: [{
+            label: 'Revenue ($)',
+            data: [12500, 19000, 15000, 22000, 19500, 24000, 28000],
+            borderColor: '#4e73df',
+            backgroundColor: 'rgba(78, 115, 223, 0.05)',
+            borderWidth: 2,
+            tension: 0.3,
+            fill: true,
+            pointBackgroundColor: '#4e73df',
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }, {
+            label: 'Orders',
+            data: [800, 1200, 1000, 1500, 1300, 1600, 1800],
+            borderColor: '#1cc88a',
+            backgroundColor: 'rgba(28, 200, 138, 0.05)',
+            borderWidth: 2,
+            tension: 0.3,
+            fill: true,
+            pointBackgroundColor: '#1cc88a',
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                drawBorder: false
+              },
+              ticks: {
+                callback: function(value) {
+                  return '$' + value.toLocaleString();
+                }
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+
+      // Initialize Revenue Chart
+      const revenueChart = initResponsiveChart('revenueChart', {
+        type: 'doughnut',
+        data: {
+          labels: ['Direct Sales', 'Affiliate', 'Marketplace'],
+          datasets: [{
+            data: [28400, 12750, 15080],
+            backgroundColor: ['#4e73df', '#1cc88a', '#f6c23e'],
+            hoverBackgroundColor: ['#2e59d9', '#17a673', '#dda20a'],
+            hoverBorderColor: "rgba(234, 236, 244, 1)",
+            borderWidth: 0,
+            hoverOffset: 10
+          }]
+        },
+        options: {
+          cutout: '70%',
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.raw || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = Math.round((value / total) * 100);
+                  return `${label}: $${value.toLocaleString()} (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // Initialize Traffic Chart
+      const trafficChart = initResponsiveChart('trafficChart', {
+        type: 'pie',
+        data: {
+          labels: ['Organic', 'Direct', 'Referral', 'Social', 'Email'],
+          datasets: [{
+            data: [35, 25, 20, 15, 5],
+            backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'],
+            hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf', '#dda20a', '#be2617'],
+            hoverBorderColor: "rgba(234, 236, 244, 1)",
+            borderWidth: 0
+          }]
+        },
+        options: {
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: {
+                padding: 15,
+                usePointStyle: true,
+                pointStyle: 'circle'
+              }
+            }
+          }
+        }
+      });
+
+      // Initialize Funnel Chart
+      const funnelChart = initResponsiveChart('funnelChart', {
+        type: 'bar',
+        data: {
+          labels: ['Visits', 'Add to Cart', 'Checkout', 'Purchase'],
+          datasets: [{
+            label: 'Customers',
+            data: [10240, 1802, 950, 745],
+            backgroundColor: [
+              'rgba(78, 115, 223, 0.8)',
+              'rgba(28, 200, 138, 0.8)',
+              'rgba(54, 185, 204, 0.8)',
+              'rgba(231, 74, 59, 0.8)'
+            ],
+            borderColor: [
+              'rgba(78, 115, 223, 1)',
+              'rgba(28, 200, 138, 1)',
+              'rgba(54, 185, 204, 1)',
+              'rgba(231, 74, 59, 1)'
+            ],
+            borderWidth: 1,
+            borderRadius: 4
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          scales: {
+            x: {
+              beginAtZero: true,
+              grid: {
+                display: false
+              }
+            },
+            y: {
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+
+      // Handle window resize
+      let resizeTimer;
+      window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+          [salesChart, revenueChart, trafficChart, funnelChart].forEach(chart => {
+            if (chart) {
+              // Update legend position based on screen size
+              if (chart.options.plugins?.legend) {
+                chart.options.plugins.legend.position = window.innerWidth < 768 ? 'bottom' : 
+                  (chart.config.options?.plugins?.legend?.position || 'top');
+              }
+              chart.update();
+            }
+          });
+        }, 200);
+      });
+    });
+</script>
+
+<!-- Auto-Suggestion SKU-->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const skuInput = document.getElementById('sku');
+    const skuSuggestion = document.getElementById('skuSuggestion');
+    const productNameInput = document.getElementById('product_name');
+    const categorySelect = document.getElementById('category');
+  
+    async function updateSkuSuggestion() {
+      const name = cleanString(productNameInput.value.trim().slice(0, 5));
+      const category = categorySelect.value 
+        ? cleanString(categorySelect.value.slice(0, 3)) 
+        : 'GEN';
+      
+      try {
+        const response = await fetch('/api/get-next-product-id/');
+        const data = await response.json();
+        skuSuggestion.textContent = `${name}-${category}-${data.next_id}`;
+      } catch (error) {
+        skuSuggestion.textContent = `${name}-${category}-TMP`;
+      }
+    }
+  
+    function cleanString(str) {
+      return str.toUpperCase()
+              .replace(/\s+/g, '-')
+              .replace(/[^A-Z0-9-]/g, '');
+    }
+  
+    productNameInput.addEventListener('input', updateSkuSuggestion);
+    categorySelect.addEventListener('change', updateSkuSuggestion);
+  
+    document.querySelector('form').addEventListener('submit', function(e) {
+      if (!skuInput.value.trim()) {
+        skuInput.value = skuSuggestion.textContent;
+      }
+    });
+  });
+</script>
+
+{% else %}
+<div class="alert alert-danger" role="alert">
+  <h4 class="alert-heading">Access Denied</h4>
+  <p>You do not have permission to view this page.</p>
+  <hr>
+  <p class="mb-0">Please contact your administrator if you believe this is an error.</p>
+</div>
+{% endif %}
+
+{% endblock adminbody %}

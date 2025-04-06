@@ -1,0 +1,337 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Inventory History Log{% endblock %}
+
+{% block adminbody %}
+
+{% if request.user.is_authenticated and request.user.is_staff and request.user.is_active %}
+
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h4 mb-0 text-gray-800">
+                <i class="fas fa-history text-primary me-2"></i>
+                Inventory History Log
+            </h1>
+        </div>
+        <div>
+            <button class="btn btn-sm btn-outline-secondary me-2">
+                <i class="fas fa-sync-alt me-1"></i> Refresh
+            </button>
+            <a href="{% url 'admin-dashboard' %}" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-arrow-left me-1"></i> Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters Card -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold">
+                    <i class="fas fa-filter text-muted me-2"></i>
+                    Filter History
+                </h6>
+                <button class="btn btn-sm btn-link text-muted" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+        </div>
+        <div class="collapse show" id="filterCollapse">
+            <div class="card-body">
+                <form class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-muted">Date Range</label>
+                        <div class="input-group input-group-sm">
+                            <input type="date" class="form-control" id="startDate">
+                            <span class="input-group-text bg-transparent border-start-0 border-end-0">to</span>
+                            <input type="date" class="form-control" id="endDate">
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted">Product</label>
+                        <select class="form-select form-select-sm">
+                            <option selected>All Products</option>
+                            <option>Wireless Headphones</option>
+                            <option>Cotton T-Shirt</option>
+                            <option>Ceramic Mug</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted">Action Type</label>
+                        <select class="form-select form-select-sm">
+                            <option selected>All Actions</option>
+                            <option>Restock</option>
+                            <option>Sale</option>
+                            <option>Damage</option>
+                            <option>Adjustment</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted">User</label>
+                        <select class="form-select form-select-sm">
+                            <option selected>All Users</option>
+                            <option>Administrator</option>
+                            <option>Inventory Manager</option>
+                            <option>Point of Sale</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted">Status</label>
+                        <select class="form-select form-select-sm">
+                            <option selected>All Statuses</option>
+                            <option>Completed</option>
+                            <option>Pending Review</option>
+                            <option>Reversed</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end gap-2">
+                        <button type="submit" class="btn btn-sm btn-primary w-100">
+                            <i class="fas fa-search me-1"></i> Apply
+                        </button>
+                        <button type="reset" class="btn btn-sm btn-outline-secondary w-100">
+                            <i class="fas fa-sync-alt me-1"></i> Reset
+                        </button>
+                    </div>
+                    
+                </form>
+            </div>
+            <div class="card-footer bg-white border-top py-2">
+                <div class="d-flex justify-content-between">
+                    <button type="reset" class="btn btn-sm btn-link text-muted">
+                        <i class="fas fa-redo me-1"></i> Reset Filters
+                    </button>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary me-2">
+                            <i class="fas fa-file-export me-1"></i> Export CSV
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-print me-1"></i> Print
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Log Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold">
+                    <i class="fas fa-list-ul text-muted me-2"></i>
+                    Inventory Transactions
+                </h6>
+                <div class="text-muted small">
+                    <span class="fw-bold">1-10</span> of <span class="fw-bold">128</span> records
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="150" class="ps-4">Timestamp</th>
+                            <th>Product Details</th>
+                            <th width="120">Action</th>
+                            <th width="100" class="text-end">Qty Change</th>
+                            <th width="100" class="text-end">New Qty</th>
+                            <th width="120">User</th>
+                            <th>Notes</th>
+                            <th width="80" class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Restock Example -->
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold small">Jun 20, 2023</div>
+                                <div class="text-muted extra-small">14:30:45</div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <img src="https://via.placeholder.com/40" width="40" height="40" class="rounded" alt="Product">
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <div class="fw-bold">Wireless Headphones</div>
+                                        <div class="text-muted extra-small">SKU: ELEC-001</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-success bg-opacity-10 text-success px-2 py-1 small">
+                                    <i class="fas fa-arrow-up me-1"></i> Restock
+                                </span>
+                            </td>
+                            <td class="text-end fw-bold text-success">+50</td>
+                            <td class="text-end fw-bold">124</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-primary bg-opacity-10 text-primary rounded-circle me-2 d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <span>admin</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="text-truncate small" style="max-width: 200px;" title="Restocked from supplier invoice #INV-98765">
+                                    Restocked from supplier invoice #INV-98765
+                                </div>
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="#"><i class="fas fa-eye me-2"></i> View Details</a></li>
+                                        <li><a class="dropdown-item" href="#"><i class="fas fa-file-invoice me-2"></i> View Document</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-undo me-2"></i> Reverse Entry</a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Sale Example -->
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold small">Jun 18, 2023</div>
+                                <div class="text-muted extra-small">09:15:22</div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <img src="https://via.placeholder.com/40" width="40" height="40" class="rounded" alt="Product">
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <div class="fw-bold">Cotton T-Shirt</div>
+                                        <div class="text-muted extra-small">SKU: CLOTH-205 (Size M)</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary bg-opacity-10 text-primary px-2 py-1 small">
+                                    <i class="fas fa-shopping-cart me-1"></i> Sale
+                                </span>
+                            </td>
+                            <td class="text-end fw-bold text-danger">-1</td>
+                            <td class="text-end fw-bold">14</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-info bg-opacity-10 text-info rounded-circle me-2 d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-cash-register"></i>
+                                    </div>
+                                    <span>POS-001</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="text-truncate small" style="max-width: 200px;" title="Order #ORD-54321, Customer: John Doe">
+                                    Order #ORD-54321, Customer: John Doe
+                                </div>
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="#"><i class="fas fa-eye me-2"></i> View Details</a></li>
+                                        <li><a class="dropdown-item" href="#"><i class="fas fa-receipt me-2"></i> View Receipt</a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Damage Example -->
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold small">Jun 15, 2023</div>
+                                <div class="text-muted extra-small">11:42:10</div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <img src="https://via.placeholder.com/40" width="40" height="40" class="rounded" alt="Product">
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <div class="fw-bold">Ceramic Coffee Mug</div>
+                                        <div class="text-muted extra-small">SKU: HOME-032</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-danger bg-opacity-10 text-danger px-2 py-1 small">
+                                    <i class="fas fa-times-circle me-1"></i> Damage
+                                </span>
+                            </td>
+                            <td class="text-end fw-bold text-danger">-2</td>
+                            <td class="text-end fw-bold">8</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-warning bg-opacity-10 text-warning rounded-circle me-2 d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-user-tie"></i>
+                                    </div>
+                                    <span>manager</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="text-truncate small" style="max-width: 200px;" title="Broken during storage - incident report #IR-2023-45">
+                                    Broken during storage - incident report #IR-2023-45
+                                </div>
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="#"><i class="fas fa-eye me-2"></i> View Details</a></li>
+                                        <li><a class="dropdown-item" href="#"><i class="fas fa-file-alt me-2"></i> View Report</a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="card-footer bg-white border-top py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="text-muted small">
+                    Showing <span class="fw-bold">1</span> to <span class="fw-bold">3</span> of <span class="fw-bold">128</span> entries
+                </div>
+                <nav aria-label="Page navigation">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item">
+                            <a class="page-link" href="#" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endif %}
+{% endblock %}

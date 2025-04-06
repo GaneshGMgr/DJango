@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Contact Us{% endblock title %}
+{% block body %}
+
+<style>
+  .loading {
+    display: none;
+    color: blue;
+  }
+
+  .sent-message {
+    display: none;
+    color: green;
+  }
+
+  .error-message {
+    display: none;
+    color: red;
+  }
+</style>
+
+<section id="contact" class="contact section">
+  <div class="container section-title" data-aos="fade-up">
+    <h2>Contact</h2>
+    <p><span>Need Help?</span> <span class="description-title">Contact us</span></p>
+  </div>
+
+  <div class="container" data-aos="fade-up" data-aos-delay="100">
+    <div class="row gy-4">
+      <div class="col-lg-8">
+        <form id="contactForm" method="post" class="php-email-form" data-aos="fade-up" novalidate>
+          {% csrf_token %}
+          <div class="row gy-4">
+            <div class="col-md-6">
+              <input type="text" name="name" id="name" class="form-control" placeholder="Your Name" required />
+              <div id="nameError" class="validation-message"></div>
+            </div>
+
+            <div class="col-md-6">
+              <input type="email" class="form-control" name="email" id="email" placeholder="Your Email" required />
+              <div id="emailError" class="validation-message"></div>
+            </div>
+
+            <div class="col-md-12">
+              <input type="text" class="form-control" name="subject" id="subject" placeholder="Subject" required />
+              <div id="subjectError" class="validation-message"></div>
+            </div>
+
+            <div class="col-md-12">
+              <textarea class="form-control" name="message" id="message" rows="6" placeholder="Message" required></textarea>
+              <div id="messageError" class="validation-message"></div>
+            </div>
+
+            <div class="col-md-12 text-center">
+              <div class="loading">Loading...</div>
+              <div class="sent-message"></div>
+              <div class="error-message"></div>
+              <button type="submit">Send Message</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  function validateForm() {
+    let isValid = true;
+    document.querySelectorAll('.validation-message').forEach(el => el.textContent = '');
+    document.querySelectorAll('.form-control').forEach(el => el.classList.remove('error'));
+
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const subject = document.getElementById('subject').value.trim();
+    const message = document.getElementById('message').value.trim();
+    
+    if (name === '') {
+      document.getElementById('nameError').textContent = 'Name is required.';
+      document.getElementById('name').classList.add('error');
+      isValid = false;
+    }
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (email === '' || !emailPattern.test(email)) {
+      document.getElementById('emailError').textContent = 'Enter a valid email.';
+      document.getElementById('email').classList.add('error');
+      isValid = false;
+    }
+    if (subject === '') {
+      document.getElementById('subjectError').textContent = 'Subject is required.';
+      document.getElementById('subject').classList.add('error');
+      isValid = false;
+    }
+    if (message === '') {
+      document.getElementById('messageError').textContent = 'Message is required.';
+      document.getElementById('message').classList.add('error');
+      isValid = false;
+    }
+
+    return isValid;
+  }
+
+  document.getElementById('contactForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    document.querySelector('.sent-message').style.display = 'none';
+    document.querySelector('.error-message').style.display = 'none';
+    document.querySelector('.loading').style.display = 'block';
+
+    if (!validateForm()) {
+      document.querySelector('.loading').style.display = 'none';
+      return;
+    }
+
+    const formData = {
+      name: document.getElementById('name').value.trim(),
+      email: document.getElementById('email').value.trim(),
+      subject: document.getElementById('subject').value.trim(),
+      message: document.getElementById('message').value.trim(),
+    };
+
+    fetch('/contact', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector("input[name=csrfmiddlewaretoken]").value
+      },
+      body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+      document.querySelector('.loading').style.display = 'none';
+      if (data.status === 'success') {
+        document.querySelector('.sent-message').textContent = data.message;
+        document.querySelector('.sent-message').style.display = 'block'; // making it visible
+        document.querySelector('.error-message').style.display = 'none'; // making it invisible
+        document.getElementById("contactForm").reset(); // Clear form after success
+      } else {
+        document.querySelector('.error-message').textContent = data.message;
+        document.querySelector('.error-message').style.display = 'block';
+        document.querySelector('.sent-message').style.display = 'none';
+      }
+    })
+    .catch(error => {
+      document.querySelector('.loading').style.display = 'none';
+      document.querySelector('.error-message').textContent = 'An error occurred. Please try again.';
+      document.querySelector('.error-message').style.display = 'block';
+    });
+  });
+</script>
+
+{% endblock body %}

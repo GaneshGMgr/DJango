@@ -1,0 +1,701 @@
+{% extends "admin/admin_base.html" %} {% block title %}Refund{% endblock %} 
+{% block adminbody %} 
+{% if request.user.is_authenticated and request.user.is_staff and request.user.is_active %}
+
+<script>
+    const style = document.createElement("style");
+    style.textContent = `
+      /* Base Styles */
+      .refund-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 5px 30px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+  
+      /* Gradient Header */
+      .bg-gradient-danger {
+        background: linear-gradient(135deg, #ff4d4d 0%, #f94444 100%);
+      }
+  
+      /* Status Ribbon */
+      .status-ribbon {
+        background-color: #fff8e1;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      }
+  
+      /* Summary Cards */
+      .summary-card {
+        display: flex;
+        align-items: center;
+        background: white;
+        border-radius: 8px;
+        padding: 15px;
+        height: 100%;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+        transition: all 0.3s ease;
+      }
+  
+      .summary-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+      }
+  
+      .icon-circle {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        flex-shrink: 0;
+      }
+  
+      .icon-circle-sm {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+      }
+  
+      .summary-label {
+        font-size: 13px;
+        color: #6c757d;
+        margin-bottom: 2px;
+      }
+  
+      .summary-value {
+        font-size: 16px;
+        font-weight: 600;
+      }
+  
+      /* Color Utilities */
+      .bg-primary-light {
+        background-color: rgba(13, 110, 253, 0.1);
+      }
+  
+      .bg-success-light {
+        background-color: rgba(25, 135, 84, 0.1);
+      }
+  
+      .bg-info-light {
+        background-color: rgba(13, 202, 240, 0.1);
+      }
+  
+      .bg-warning-light {
+        background-color: rgba(255, 193, 7, 0.1);
+      }
+  
+      .bg-danger-light {
+        background-color: rgba(220, 53, 69, 0.1);
+      }
+  
+      .bg-purple-light {
+        background-color: rgba(111, 66, 193, 0.1);
+      }
+  
+      /* Table Styles */
+      .selected-row {
+        background-color: rgba(220, 53, 69, 0.03);
+        position: relative;
+      }
+  
+      .selected-row::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 3px;
+        background-color: #dc3545;
+      }
+  
+      /* Customer Message */
+      .customer-message {
+        border-left: 3px solid #0d6efd;
+      }
+  
+      .avatar-circle-sm {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+      }
+  
+      /* Attachment Thumbnails */
+      .attachment-thumbnail {
+        display: block;
+        width: 120px;
+        text-decoration: none;
+        color: inherit;
+      }
+  
+      .thumbnail-img {
+        position: relative;
+        border-radius: 6px;
+        overflow: hidden;
+        height: 100px;
+        background: #f8f9fa;
+      }
+  
+      .thumbnail-img img {
+        object-fit: cover;
+        width: 100%;
+        height: 100%;
+      }
+  
+      .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: all 0.3s ease;
+        color: white;
+      }
+  
+      .attachment-thumbnail:hover .overlay {
+        opacity: 1;
+      }
+  
+      /* Option Cards */
+      .option-card {
+        position: relative;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+  
+      .option-card:hover {
+        border-color: #86b7fe;
+        background-color: rgba(13, 110, 253, 0.03);
+      }
+  
+      .option-input {
+        position: absolute;
+        opacity: 0;
+      }
+  
+      .option-input:checked + .option-content {
+        border-color: #0d6efd;
+        background-color: rgba(13, 110, 253, 0.05);
+      }
+  
+      .option-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.2s ease;
+        border-radius: 6px;
+        padding: 8px;
+      }
+  
+      .option-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+  
+      /* Responsive Adjustments */
+      @media (max-width: 992px) {
+        .refund-body {
+          padding: 20px;
+        }
+        .summary-card {
+          padding: 12px;
+        }
+        .icon-circle {
+          width: 40px;
+          height: 40px;
+          margin-right: 12px;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+</script>
+  
+
+<div class="refund-container">
+  <!-- Premium Header -->
+  <div class="refund-header bg-gradient-danger text-white p-4 rounded-top-3">
+    <div class="d-flex justify-content-between align-items-start">
+      <div>
+        <div class="d-flex align-items-center mb-2">
+          <span class="badge bg-white text-danger fw-bold me-3">
+            <i class="fas fa-exchange-alt me-1"></i> REFUND
+          </span>
+          <span class="text-white-80">Request #REF-10042</span>
+        </div>
+        <h2 class="mb-0 fw-light">Process Customer Refund</h2>
+      </div>
+      <div class="text-end">
+        <button class="btn btn-sm btn-light rounded-pill px-3">
+          <i class="fas fa-times me-1"></i> Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Ribbon -->
+  <div class="status-ribbon bg-warning text-dark">
+    <div class="container-fluid">
+      <div class="d-flex justify-content-between align-items-center py-2">
+        <div class="d-flex align-items-center">
+          <i class="fas fa-clock me-2"></i>
+          <span class="fw-medium"
+            >Pending approval since May 20, 2023 (2 days)</span
+          >
+        </div>
+        <div class="text-end">
+          <span class="badge bg-white text-dark rounded-pill px-3 py-1">
+            <i class="fas fa-dollar-sign me-1"></i> Refund Amount: $125.73
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="refund-body p-4">
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-3">
+        <div class="summary-card">
+          <div class="icon-circle bg-primary-light text-primary">
+            <i class="fas fa-receipt"></i>
+          </div>
+          <div class="summary-content">
+            <div class="summary-label">Order Number</div>
+            <div class="summary-value">#ORD-10025</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="summary-card">
+          <div class="icon-circle bg-info-light text-info">
+            <i class="fas fa-user"></i>
+          </div>
+          <div class="summary-content">
+            <div class="summary-label">Customer</div>
+            <div class="summary-value">John Doe</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="summary-card">
+          <div class="icon-circle bg-success-light text-success">
+            <i class="fas fa-calendar-day"></i>
+          </div>
+          <div class="summary-content">
+            <div class="summary-label">Order Date</div>
+            <div class="summary-value">May 15, 2023</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="summary-card">
+          <div class="icon-circle bg-purple-light text-purple">
+            <i class="fas fa-credit-card"></i>
+          </div>
+          <div class="summary-content">
+            <div class="summary-label">Payment Method</div>
+            <div class="summary-value">VISA •••• 4242</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Two Column Layout -->
+    <div class="row g-4">
+      <!-- Left Column -->
+      <div class="col-lg-7">
+        <!-- Items Card -->
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-white border-0 py-3">
+            <h5 class="mb-0 d-flex align-items-center">
+              <span class="icon-circle-sm bg-danger-light text-danger me-3">
+                <i class="fas fa-box-open"></i>
+              </span>
+              Items Requested for Return
+            </h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width: 40px"></th>
+                    <th>Product</th>
+                    <th class="text-end" style="width: 80px">Qty</th>
+                    <th class="text-end" style="width: 100px">Price</th>
+                    <th class="text-end" style="width: 100px">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="selected-row">
+                    <td>
+                      <div class="form-check">
+                        <input
+                          class="form-check-input"
+                          type="checkbox"
+                          checked
+                        />
+                      </div>
+                    </td>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <img
+                          src="https://via.placeholder.com/60"
+                          class="rounded me-3"
+                          width="40"
+                          height="40"
+                        />
+                        <div>
+                          <div class="fw-medium">Wireless Headphones</div>
+                          <small class="text-danger">
+                            <i class="fas fa-exclamation-circle me-1"></i>
+                            Defective: Right earbud not working
+                          </small>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="text-end">1</td>
+                    <td class="text-end">$99.99</td>
+                    <td class="text-end fw-medium">$99.99</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" />
+                      </div>
+                    </td>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <img
+                          src="https://via.placeholder.com/60"
+                          class="rounded me-3"
+                          width="40"
+                          height="40"
+                        />
+                        <div>
+                          <div class="fw-medium">Phone Case</div>
+                          <small class="text-warning">
+                            <i class="fas fa-info-circle me-1"></i> Wrong color
+                            received
+                          </small>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="text-end">2</td>
+                    <td class="text-end">$25.00</td>
+                    <td class="text-end fw-medium">$50.00</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card-footer bg-white border-0 py-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="text-muted small">
+                <i class="fas fa-info-circle me-1"></i> Select items to include
+                in refund
+              </div>
+              <div class="fw-medium">
+                Subtotal: <span class="text-danger">$149.99</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Customer Reason Card -->
+        <div class="card border-0 shadow-sm mt-4">
+          <div class="card-header bg-white border-0 py-3">
+            <h5 class="mb-0 d-flex align-items-center">
+              <span class="icon-circle-sm bg-info-light text-info me-3">
+                <i class="fas fa-comment-alt"></i>
+              </span>
+              Customer's Refund Request
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="customer-message bg-light rounded-3 p-3">
+              <div class="d-flex">
+                <div class="flex-shrink-0">
+                  <div class="avatar-circle-sm bg-primary text-white">JD</div>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                  <div class="d-flex justify-content-between mb-2">
+                    <span class="fw-medium">John Doe</span>
+                    <small class="text-muted">May 20, 2023 at 2:32 PM</small>
+                  </div>
+                  <p class="mb-0">
+                    "Received the headphones yesterday but the right earbud
+                    doesn't produce any sound. I've tried resetting them but the
+                    issue persists. Please process a full refund."
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <h6 class="d-flex align-items-center mb-3">
+                <i class="fas fa-paperclip me-2 text-muted"></i> Attachments
+              </h6>
+              <div class="d-flex flex-wrap gap-3">
+                <a href="#" class="attachment-thumbnail">
+                  <div class="thumbnail-img">
+                    <img
+                      src="https://via.placeholder.com/200"
+                      class="img-fluid rounded"
+                    />
+                    <div class="overlay">
+                      <i class="fas fa-search-plus"></i>
+                    </div>
+                  </div>
+                  <small class="d-block text-center mt-1">defect.jpg</small>
+                </a>
+                <a href="#" class="attachment-thumbnail">
+                  <div class="thumbnail-img bg-light">
+                    <div class="document-icon">
+                      <i class="fas fa-file-pdf text-danger fa-2x"></i>
+                    </div>
+                  </div>
+                  <small class="d-block text-center mt-1">receipt.pdf</small>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div class="col-lg-5">
+        <!-- Process Refund Card -->
+        <div class="card border-0 shadow-sm sticky-top" style="top: 20px">
+          <div class="card-header bg-white border-0 py-3">
+            <h5 class="mb-0 d-flex align-items-center">
+              <span class="icon-circle-sm bg-success-light text-success me-3">
+                <i class="fas fa-cog"></i>
+              </span>
+              Refund Processing
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-4">
+              <label class="form-label fw-medium mb-3">Refund Method</label>
+              <div class="vstack gap-2">
+                <label class="option-card">
+                  <input
+                    type="radio"
+                    name="refundMethod"
+                    class="option-input"
+                    checked
+                  />
+                  <div class="option-content">
+                    <div class="d-flex align-items-center">
+                      <div class="option-icon bg-primary-light text-primary">
+                        <i class="fas fa-credit-card"></i>
+                      </div>
+                      <div class="ms-3">
+                        <div class="option-title">Original Payment Method</div>
+                        <div class="option-description">VISA •••• 4242</div>
+                      </div>
+                    </div>
+                    <div class="option-badge bg-success-light text-success">
+                      $125.73
+                    </div>
+                  </div>
+                </label>
+                <label class="option-card">
+                  <input
+                    type="radio"
+                    name="refundMethod"
+                    class="option-input"
+                  />
+                  <div class="option-content">
+                    <div class="d-flex align-items-center">
+                      <div class="option-icon bg-warning-light text-warning">
+                        <i class="fas fa-gift"></i>
+                      </div>
+                      <div class="ms-3">
+                        <div class="option-title">Store Credit</div>
+                        <div class="option-description">
+                          Customer account balance
+                        </div>
+                      </div>
+                    </div>
+                    <div class="option-badge bg-warning-light text-warning">
+                      +$125.73
+                    </div>
+                  </div>
+                </label>
+                <label class="option-card">
+                  <input
+                    type="radio"
+                    name="refundMethod"
+                    class="option-input"
+                  />
+                  <div class="option-content">
+                    <div class="d-flex align-items-center">
+                      <div class="option-icon bg-info-light text-info">
+                        <i class="fas fa-dollar-sign"></i>
+                      </div>
+                      <div class="ms-3">
+                        <div class="option-title">Partial Refund</div>
+                        <div class="option-description">Custom amount</div>
+                      </div>
+                    </div>
+                    <div class="option-extra">
+                      <div class="input-group input-group-sm">
+                        <span class="input-group-text">$</span>
+                        <input
+                          type="number"
+                          class="form-control"
+                          placeholder="0.00"
+                          style="max-width: 100px"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-medium mb-3">Inventory Options</label>
+              <div class="form-check form-switch mb-3">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="restockSwitch"
+                  checked
+                />
+                <label class="form-check-label" for="restockSwitch">
+                  <span class="fw-medium">Restock items</span>
+                  <small class="d-block text-muted"
+                    >Add returned items back to inventory</small
+                  >
+                </label>
+              </div>
+              <div class="form-check form-switch">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="returnLabelSwitch"
+                />
+                <label class="form-check-label" for="returnLabelSwitch">
+                  <span class="fw-medium">Generate return label</span>
+                  <small class="d-block text-muted"
+                    >Email shipping label to customer</small
+                  >
+                </label>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-medium">Administrator Notes</label>
+              <textarea
+                class="form-control"
+                rows="3"
+                placeholder="Add internal notes about this refund..."
+              >
+Verified defect with video evidence. Approved for full refund.</textarea
+              >
+            </div>
+
+            <div class="mb-3">
+              <div class="d-flex justify-content-between mb-2">
+                <label class="form-label fw-medium"
+                  >Customer Notification</label
+                >
+                <div class="form-check form-switch">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="notifySwitch"
+                    checked
+                  />
+                  <label class="form-check-label" for="notifySwitch"></label>
+                </div>
+              </div>
+              <textarea
+                class="form-control"
+                rows="2"
+                placeholder="Custom message (optional)"
+              >
+Your refund for order #ORD-10025 has been approved. We've processed a refund of $125.73 to your original payment method.</textarea
+              >
+            </div>
+          </div>
+          <div class="card-footer bg-white border-0 py-3">
+            <div class="d-grid gap-3">
+              <button class="btn btn-danger btn-lg">
+                <i class="fas fa-check-circle me-2"></i> Approve Full Refund
+              </button>
+              <button class="btn btn-outline-secondary">
+                <i class="fas fa-times-circle me-2"></i> Reject Request
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!--  Model -->
+{% comment %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Order History Modal Toggle
+    const orderHistoryButtons = document.querySelectorAll(
+      "#orderHistoryCustomer"
+    );
+    const orderHistoryModal = document.getElementById("orderHistoryModal");
+    const closeOrderHistoryBtn = document.getElementById(
+      "closeOrderHistoryBtn"
+    );
+
+    if (orderHistoryButtons) {
+      orderHistoryButtons.forEach((button) => {
+        button.addEventListener("click", function () {
+          // You would typically fetch order data here based on the user
+          // For demo, we're just showing the modal
+          document.body.classList.add("modal-open");
+          orderHistoryModal.classList.add("show");
+        });
+      });
+    }
+
+    if (closeOrderHistoryBtn) {
+      closeOrderHistoryBtn.addEventListener("click", function () {
+        document.body.classList.remove("modal-open");
+        orderHistoryModal.classList.remove("show");
+      });
+    }
+
+    // Close modal when clicking outside
+    window.addEventListener("click", function (event) {
+      if (event.target === orderHistoryModal) {
+        document.body.classList.remove("modal-open");
+        orderHistoryModal.classList.remove("show");
+      }
+    });
+  });
+</script>
+{% endcomment %} {% endif %} {% endblock %}

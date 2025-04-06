@@ -1,0 +1,272 @@
+{% extends "base.html" %} {% block title %}Home{% endblock title %}{% block body %}
+
+<!-- Portfolio Section -->
+<section id="portfolio" class="portfolio section">
+  <!-- Section Title -->
+  <div class="container section-title" data-aos="fade-up">
+    <h2>Portfolio</h2>
+    <p>
+      <span>Check Our</span>
+      <span class="description-title">Products</span>
+    </p>
+  </div>
+  <!-- End Section Title -->
+
+  <div class="container">
+    <div
+      class="isotope-layout"
+      data-default-filter="*"
+      data-layout="masonry"
+      data-sort="original-order"
+    >
+      <ul
+        class="portfolio-filters isotope-filters"
+        data-aos="fade-up"
+        data-aos-delay="100"
+      >
+        <li data-filter="*" class="filter-active">All</li>
+        <li data-filter=".filter-app">App</li>
+        <li data-filter=".filter-product">Card</li>
+        <li data-filter=".filter-branding">Web</li>
+      </ul>
+      <!-- End Portfolio Filters -->
+      {% comment %}
+        {% for product, tsnhr, nSlides in allProds %}
+          <div class="row gy-4 isotope-container" data-aos="fade-up" data-aos-delay="200">
+            {% for product in product %}
+              <div class="col-lg-4 col-md-6 portfolio-item isotope-item filter-product">
+                <!-- Display product image -->
+                <img src="{{ product.image.url }}" class="img-fluid" alt="{{ product.product_name }}" />
+                
+                <div class="portfolio-info">
+                  <!-- Display product name, category, subcategory, price, and description -->
+                  <h4>{{ product.product_name }}</h4>
+                  <p><strong>Category:</strong> {{ product.category }}</p>
+                  <p><strong>Subcategory:</strong> {{ product.subcategory }}</p>
+                  <p><strong>Price:</strong> ${{ product.price }}</p>
+                  <p>{{ product.description | slice: "0:53" }}...</p>
+                  
+                  <!-- Link to the product image (lightbox) -->
+                  <a href="{{ product.image.url }}" title="{{ product.product_name }}" data-gallery="portfolio-gallery-product" class="glightbox preview-link">
+                    <i class="bi bi-zoom-in"></i>
+                  </a>
+                  
+                  <!-- Link to more product details -->
+                  <a href="portfolio-details.html" title="More Details" class="details-link">
+                    <i class="bi bi-link-45deg"></i>
+                  </a>
+      
+                  <!-- Add to Cart Button -->
+                  <button class="btn btn-primary add-to-cart-btn" data-product-id="{{ product.id }}" onclick="addToCart({{ product.id }})">
+                    <i class="bi bi-cart-plus"></i> Add to Cart
+                  </button>
+                  <a href="portfolio-details.html" title="More Details" class="details-link"></a>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% endfor %}
+      {% endcomment %}
+
+      <div class="row gy-4 isotope-container" data-aos="fade-up" data-aos-delay="200">
+        <!-- Product Item -->
+        <div class="col-lg-4 col-md-6 portfolio-item isotope-item filter-product">
+          <img
+            src="static/assets/img/masonry-portfolio/masonry-portfolio-2.jpg"
+            class="img-fluid"
+            alt="Product 1"
+          />
+          <div class="portfolio-info">
+            <h4>Product 1</h4>
+            <p><strong>Price:</strong> $599.99</p>
+      
+            <!-- Preview Link -->
+            <a
+              href="static/assets/products/product1.jpg"
+              title="Product 1"
+              data-gallery="portfolio-gallery-product"
+              class="glightbox preview-link"
+            >
+              <i class="bi bi-zoom-in"></i>
+            </a>
+      
+            <!-- More Details Link -->
+            <a
+              href="portfolio-details.html"
+              title="More Details"
+              class="details-link"
+            >
+              <i class="bi bi-link-45deg"></i>
+            </a>
+      
+            <!-- Add to Cart Button -->
+            <div id="cart-container">
+              <a href="#" id="add-to-cart-btn" style="
+                display: inline-block;
+                background-color: #ff4500;
+                color: white;
+                font-size: 12px; /* Smaller font size */
+                font-weight: bold;
+                padding: 6px 12px; /* Smaller padding */
+                border-radius: 20px; /* Slightly smaller border radius */
+                text-decoration: none;
+                transition: all 0.3s ease-in-out;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                float: right;
+                margin-top: 10px;
+              ">
+                <i class="bi bi-cart-plus"></i> Add to Cart
+              </a>
+              <!-- Quantity Buttons (Initially hidden, but styled for design) -->
+              <div id="quantity-buttons" style="display: none; margin-top: 10px; float: right;">
+                <button id="increase-btn" style="
+                  background-color: #28a745;
+                  color: white;
+                  padding: 6px 12px;
+                  border-radius: 50%;
+                  border: none;
+                  font-size: 18px;
+                  font-weight: bold;
+                  margin-right: 5px;
+                ">+</button>
+                <button id="decrease-btn" style="
+                  background-color: #dc3545;
+                  color: white;
+                  padding: 6px 12px;
+                  border-radius: 50%;
+                  border: none;
+                  font-size: 18px;
+                  font-weight: bold;
+                ">-</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- End Product Item -->
+      </div>
+      
+      
+
+      <!-- End Portfolio Container -->
+    </div>
+  </div>
+</section>
+<!-- /Portfolio Section -->
+
+<!-- Include jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Your custom JavaScript -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    updateCart();
+    let cart = JSON.parse(localStorage.getItem('cart')) || {};
+    // Cart Modal Toggle 
+    let cartLink = document.getElementById("cart-link");
+    let cartModal = document.getElementById("cartModal");
+  
+    // Open the cart modal when clicking the cart link
+    cartLink.addEventListener("click", function (e) {
+      e.preventDefault();
+      cartModal.style.display = "flex"; 
+    });
+  
+    // Close Modal
+    document.querySelector(".close-modal").addEventListener("click", function () {
+      cartModal.style.display = "none"; 
+    });
+  
+    // Close modal when clicking outside the modal content
+    window.addEventListener("click", function (e) {
+      if (e.target === cartModal) {
+        cartModal.style.display = "none"; 
+      }
+    });
+  
+    // Add to Cart Click Event
+    document.querySelectorAll(".add-to-cart-btn").forEach(button => {
+      button.addEventListener("click", function (event) {
+        event.preventDefault();
+        let product = this.closest(".portfolio-item");
+        let productId = product.getAttribute("data-id");
+        let productName = product.querySelector("h4").textContent;
+        let productPrice = product.querySelector("p strong").nextSibling.nodeValue.trim();
+  
+        if (cart[productId]) {
+          cart[productId].quantity += 1; // Increase quantity if item exists
+        } else {
+          cart[productId] = {
+            name: productName,
+            price: productPrice,
+            quantity: 1 // Add new item with quantity 1
+          };
+        }
+  
+        localStorage.setItem('cart', JSON.stringify(cart));
+        updateCart();
+      });
+    });
+  
+    // Update Cart Function
+    function updateCart() {
+      let cartItems = document.getElementById("cart-items");
+      let cartCount = document.getElementById("cart-count");
+  
+      if (cartCount) {
+        cartItems.innerHTML = "";
+        let totalItems = 0;
+  
+        for (let key in cart) {
+          totalItems += cart[key].quantity;
+          let li = document.createElement("li");
+  
+          // Create cart item with quantity, plus/minus buttons, and remove option
+          li.innerHTML = `${cart[key].name} - ${cart[key].price} 
+            <button class="plus-btn" data-id="${key}">+</button>
+            ${cart[key].quantity}
+            <button class="minus-btn" data-id="${key}">-</button>`;
+          cartItems.appendChild(li);
+        }
+  
+        cartCount.textContent = totalItems;
+        cartCount.style.display = totalItems === 0 ? 'none' : 'inline';
+      }
+    }
+  
+    // Plus Button Click Event
+    document.getElementById("cart-items").addEventListener("click", function (e) {
+      if (e.target.classList.contains("plus-btn")) {
+        let productId = e.target.getAttribute("data-id");
+        cart[productId].quantity += 1;
+        localStorage.setItem('cart', JSON.stringify(cart));
+        updateCart();
+      }
+    });
+  
+    // Minus Button Click Event
+    document.getElementById("cart-items").addEventListener("click", function (e) {
+      if (e.target.classList.contains("minus-btn")) {
+        let productId = e.target.getAttribute("data-id");
+        if (cart[productId].quantity > 1) {
+          cart[productId].quantity -= 1;
+          localStorage.setItem('cart', JSON.stringify(cart));
+          updateCart();
+        }
+      }
+    });
+  
+    // Clear Cart Button
+    document.getElementById("clear-cart-btn").addEventListener("click", function () {
+      localStorage.removeItem('cart');
+      cart = {};
+      updateCart();
+    });
+  });
+</script>
+  
+  
+
+
+
+
+  {% endblock body %}

@@ -1,0 +1,1348 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Customers List{% endblock %}
+
+{% block adminbody %}
+
+{% if request.user.is_authenticated and request.user.is_staff and request.user.is_active %}
+
+<style>
+    :root {
+        --primary-color: #2c3e50;
+        --secondary-color: #858796;
+        --success-color: #1cc88a;
+        --info-color: #36b9cc;
+        --warning-color: #f6c23e;
+        --danger-color: #e74a3b;
+        --light-color: #f8f9fc;
+        --dark-color: #2c3e50;
+        --shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        --transition: all 0.3s ease-in-out;
+    }
+
+    body {
+        font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        background-color: #f8f9fc;
+        color: #5a5c69;
+        line-height: 1.6;
+    }
+
+    /* Card Styles */
+    .stat-card {
+        border-left: 0.25rem solid;
+        transition: var(--transition);
+        border-radius: 0.35rem;
+        box-shadow: var(--shadow);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.5rem 1.5rem rgba(58, 59, 69, 0.2);
+    }
+
+    .stat-card .card-body {
+        padding: 1.25rem;
+    }
+
+    .stat-card h6 {
+        color: var(--secondary-color);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-card h4 {
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-card .change {
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .stat-card .change.up {
+        color: var(--success-color);
+    }
+
+    .stat-card .change.down {
+        color: var(--danger-color);
+    }
+
+    /* Table Container */
+    .card {
+        border: none;
+        border-radius: 0.35rem;
+        box-shadow: var(--shadow);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+
+    .card-header {
+        background-color: #f8f9fc;
+        border-bottom: 1px solid #e3e6f0;
+        padding: 1rem 1.35rem;
+        font-weight: 600;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    /* Search and Filter Styles */
+    .search-filter-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        padding: 1rem;
+        background-color: #f8f9fc;
+        border-bottom: 1px solid #e3e6f0;
+    }
+
+    .search-box {
+        flex: 1;
+        min-width: 250px;
+    }
+
+    .filter-dropdown {
+        min-width: 200px;
+    }
+
+    /* Table Styles */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table {
+        width: 100%;
+        margin-bottom: 0;
+        color: var(--dark-color);
+        border-collapse: collapse;
+    }
+
+    .table thead th {
+        background-color: var(--dark-color);
+        color: white;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05rem;
+        padding: 0.75rem 1rem;
+        vertical-align: middle;
+        border: none;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .table tbody td {
+        padding: 0.75rem 1rem;
+        vertical-align: middle;
+        border-top: 1px solid #e3e6f0;
+        font-size: 0.85rem;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(78, 115, 223, 0.05);
+    }
+
+    /* Badge Styles */
+    .badge {
+        font-weight: 600;
+        padding: 0.35em 0.65em;
+        font-size: 0.75em;
+        letter-spacing: 0.05em;
+        border-radius: 0.25rem;
+    }
+
+    .badge-success {
+        background-color: var(--success-color);
+    }
+
+    .badge-danger {
+        background-color: var(--danger-color);
+    }
+
+    .badge-warning {
+        background-color: var(--warning-color);
+        color: #1f2d3d;
+    }
+
+    .badge-info {
+        background-color: var(--info-color);
+    }
+
+    /* Button Styles */
+    .btn {
+        font-weight: 600;
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.35rem;
+        transition: var(--transition);
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .btn-primary:hover {
+        background-color: #2e59d9;
+        border-color: #2653d4;
+    }
+
+    .btn-outline-warning {
+        color: var(--warning-color);
+        border-color: var(--warning-color);
+    }
+
+    .btn-outline-warning:hover {
+        background-color: var(--warning-color);
+        color: #1f2d3d;
+    }
+
+    .btn-outline-danger {
+        color: var(--danger-color);
+        border-color: var(--danger-color);
+    }
+
+    .btn-outline-danger:hover {
+        background-color: var(--danger-color);
+        color: white;
+    }
+
+    .btn-outline-info {
+        color: var(--info-color);
+        border-color: var(--info-color);
+    }
+
+    .btn-outline-info:hover {
+        background-color: var(--info-color);
+        color: white;
+    }
+
+    .btn-outline-secondary {
+        color: var(--secondary-color);
+        border-color: var(--secondary-color);
+    }
+
+    .btn-outline-secondary:hover {
+        background-color: var(--secondary-color);
+        color: white;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .action-column {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .action-row {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    /* Pagination */
+    .pagination {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .page-item.active .page-link {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .page-link {
+        color: var(--primary-color);
+    }
+
+    /* Checkbox */
+    .form-check-input {
+        width: 1.1em;
+        height: 1.1em;
+        margin-top: 0;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1050;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: var(--transition);
+    }
+
+    .modal-overlay.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .modal-content {
+        background-color: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.2);
+        width: 100%;
+        max-width: 800px;
+        transform: translateY(-20px);
+        transition: var(--transition);
+        margin: 1rem;
+    }
+
+    .modal-overlay.show .modal-content {
+        transform: translateY(0);
+    }
+
+    .modal-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e3e6f0;
+        background-color: var(--primary-color);
+        color: white;
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+
+    .modal-title {
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .btn-close {
+        color: white;
+        opacity: 0.8;
+        transition: var(--transition);
+        padding: 0.5rem;
+        margin: -0.5rem -0.5rem -0.5rem auto;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        line-height: 1;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    /* Form Styles */
+    .form-control, .form-select {
+        border: 1px solid #d1d3e2;
+        border-radius: 0.35rem;
+        padding: 0.375rem 0.75rem;
+        font-size: 0.85rem;
+        transition: var(--transition);
+    }
+
+    /* Responsive Table Styles */
+    @media (max-width: 1199.98px) {
+        .table-responsive {
+            border: 1px solid #e3e6f0;
+            border-radius: 0.35rem;
+        }
+    }
+
+    /* Hide status columns only on tablets (768px-991px) */
+    @media (max-width: 991.98px) and (min-width: 768px) {
+        .table thead th:nth-child(7),
+        .table thead th:nth-child(8),
+        .table thead th:nth-child(9),
+        .table td:nth-child(7),
+        .table td:nth-child(8),
+        .table td:nth-child(9) {
+            display: none;
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        /* Stack stats cards on mobile */
+        .stat-card {
+            margin-bottom: 1rem;
+        }
+
+        /* Search and filter adjustments */
+        .search-filter-container {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .search-box, .filter-dropdown {
+            width: 100%;
+        }
+
+        /* Action buttons adjustments */
+        .action-buttons {
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .action-row {
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        /* Adjust table header padding */
+        .table thead th {
+            padding: 0.5rem;
+        }
+
+        /* Adjust table cell padding */
+        .table tbody td {
+            padding: 0.5rem;
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        /* Full mobile responsive table - show all columns in stacked layout */
+        .table thead {
+            display: none;
+        }
+
+        .table, .table tbody, .table tr, .table td {
+            display: block;
+            width: 100%;
+        }
+
+        .table tr {
+            margin-bottom: 1rem;
+            border: 1px solid #e3e6f0;
+            border-radius: 0.35rem;
+            position: relative;
+            padding-top: 1.5rem;
+        }
+
+        .table td {
+            text-align: right;
+            padding-left: 55%;
+            position: relative;
+            border-top: 1px solid #e3e6f0;
+            border-bottom: none;
+        }
+
+        .table td::before {
+            content: attr(data-label);
+            position: absolute;
+            left: 1rem;
+            width: calc(55% - 1rem);
+            padding-right: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .table td:first-child {
+            border-top: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: auto;
+            padding: 0.25rem 0.5rem;
+            background: #f8f9fc;
+            border-right: 1px solid #e3e6f0;
+        }
+
+        .table td:first-child::before {
+            display: none;
+        }
+
+        .table td:last-child {
+            border-bottom: none;
+            text-align: center;
+            padding-left: 1rem;
+        }
+
+        .table td:last-child::before {
+            display: none;
+        }
+
+        /* Action buttons in mobile view */
+        .action-column {
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .action-row {
+            flex-direction: row;
+            gap: 0.5rem;
+        }
+
+        /* Adjust modal for small screens */
+        .modal-content {
+            margin: 0.5rem;
+        }
+
+        .modal-body {
+            padding: 1rem;
+        }
+
+        /* Adjust form elements */
+        .form-control, .form-select {
+            font-size: 0.8rem;
+        }
+    }
+
+    /* Very small devices (phones, 360px and down) */
+    @media (max-width: 360px) {
+        .table td {
+            padding-left: 50%;
+        }
+
+        .table td::before {
+            width: calc(50% - 1rem);
+        }
+
+        .stat-card h4 {
+            font-size: 1.1rem;
+        }
+
+        .stat-card h6 {
+            font-size: 0.7rem;
+        }
+
+        .card-header h5 {
+            font-size: 1rem;
+        }
+
+        .btn {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+        }
+    }
+</style>
+<!-- CSS Order History Model -->
+<style>
+  /* Timeline Styles */
+  .timeline {
+      position: relative;
+      padding-left: 0.5rem;
+  }
+  
+  .timeline-item {
+      position: relative;
+      padding-bottom: 0.75rem;
+      padding-left: 1.25rem;
+      border-left: 1px solid #e3e6f0;
+  }
+  
+  .timeline-item:last-child {
+      padding-bottom: 0;
+      border-left-color: transparent;
+  }
+  
+  .timeline-item-marker {
+      position: absolute;
+      left: -0.375rem;
+      top: 0.25rem;
+  }
+  
+  .timeline-item-marker-indicator {
+      width: 0.75rem;
+      height: 0.75rem;
+      border-radius: 100%;
+      border: 2px solid white;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  }
+  
+  .timeline-item-content {
+      padding-left: 0.25rem;
+  }
+
+  /* Modal Base Styles */
+  .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1050;
+      padding: 1rem;
+      overflow-y: auto;
+  }
+  
+  .modal-content {
+      width: 100%;
+      max-width: 900px;
+      background: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 2rem);
+  }
+  
+  .modal-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid #e3e6f0;
+      display: flex;
+      align-items: center;
+  }
+  
+  .modal-title {
+      margin: 0;
+      flex: 1;
+  }
+  
+  .modal-body {
+      padding: 1rem;
+      overflow-y: auto;
+      flex: 1;
+  }
+
+  /* Table Styles */
+  .table-responsive {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+  }
+  
+  .table {
+      width: 100%;
+      margin-bottom: 0;
+  }
+  
+  .table thead th {
+      position: sticky;
+      top: 0;
+      background:  #2c3e50;;
+      z-index: 10;
+  }
+
+  /* Responsive Breakpoints */
+  /* Extra small devices (phones, 360px and down) */
+  @media (max-width: 360px) {
+      .modal-content {
+          max-height: calc(100vh - 1rem);
+      }
+      
+      .modal-header, .modal-body {
+          padding: 0.75rem;
+      }
+      
+      .card-header h6 {
+          font-size: 0.8rem;
+      }
+      
+      .timeline-item {
+          padding-left: 1rem;
+      }
+      
+      .table th, .table td {
+          padding: 0.5rem;
+          font-size: 0.8rem;
+      }
+      
+      .modal-title {
+          font-size: 1rem;
+      }
+  }
+
+  /* Small devices (landscape phones, 576px and up) */
+  @media (min-width: 576px) {
+      .modal-content {
+          max-width: 540px;
+      }
+  }
+
+  /* Medium devices (tablets, 768px and up) */
+  @media (min-width: 768px) {
+      .modal-content {
+          max-width: 720px;
+      }
+      
+      .card-body {
+          padding: 1.25rem;
+      }
+  }
+
+  /* Large devices (desktops, 992px and up) */
+  @media (min-width: 992px) {
+      .modal-content {
+          max-width: 800px;
+      }
+  }
+
+  /* Extra large devices (large desktops, 1200px and up) */
+  @media (min-width: 1200px) {
+      .modal-content {
+          max-width: 900px;
+      }
+  }
+
+  /* Tablet portrait specific adjustments */
+  @media (max-width: 991.98px) and (orientation: portrait) {
+      .row.g-3 > [class*="col-"] {
+          margin-bottom: 1rem;
+      }
+      
+      .row.g-3 > [class*="col-"]:last-child {
+          margin-bottom: 0;
+      }
+  }
+
+  /* Tablet landscape specific adjustments */
+  @media (max-width: 991.98px) and (orientation: landscape) {
+      .modal-body {
+          padding: 0.75rem;
+      }
+      
+      .card-body {
+          padding: 1rem;
+      }
+  }
+
+  /* Mobile landscape specific adjustments */
+  @media (max-height: 500px) {
+      .modal-content {
+          max-height: 98vh;
+      }
+      
+      .table-responsive {
+          max-height: 150px;
+      }
+      
+      .card-body[style*="max-height"] {
+          max-height: 150px !important;
+      }
+  }
+</style>
+
+
+<div class="container-fluid py-4">
+    <!-- Stats Cards Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card" style="border-left-color: var(--info-color);">
+                <div class="card-body">
+                    <h6>Total Customers</h6>
+                    <h4>870</h4>
+                    <div class="change up">
+                        <i class="fas fa-arrow-up me-1"></i> +3.1% Growth
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card" style="border-left-color: var(--success-color);">
+                <div class="card-body">
+                    <h6>Active Customers</h6>
+                    <h4>520</h4>
+                    <div class="change up">
+                        <i class="fas fa-arrow-up me-1"></i> +5.2% Active
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card" style="border-left-color: var(--primary-color);">
+                <div class="card-body">
+                    <h6>New Customers</h6>
+                    <h4>120</h4>
+                    <div class="change up">
+                        <i class="fas fa-arrow-up me-1"></i> +8.3% This Month
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card" style="border-left-color: var(--danger-color);">
+                <div class="card-body">
+                    <h6>Inactive Customers</h6>
+                    <h4>150</h4>
+                    <div class="change down">
+                        <i class="fas fa-arrow-down me-1"></i> -2.5% Decline
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User List Table -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-users me-2"></i> User List</h5>
+            <button class="btn btn-sm btn-primary">
+                <i class="fas fa-plus me-1"></i> Add User
+            </button>
+        </div>
+        
+        <!-- Search and Filter Section -->
+        <div class="search-filter-container">
+            <div class="search-box">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search users..." aria-label="Search users">
+                    <button class="btn btn-outline-secondary" type="button">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="filter-dropdown">
+                <select class="form-select">
+                    <option selected>Filter by Status</option>
+                    <option value="1">Active</option>
+                    <option value="0">Inactive</option>
+                    <option value="all">All Users</option>
+                </select>
+            </div>
+            <div class="filter-dropdown">
+                <select class="form-select">
+                    <option selected>Filter by Role</option>
+                    <option value="staff">Staff</option>
+                    <option value="admin">Admin</option>
+                    <option value="customer">Customer</option>
+                    <option value="all">All Roles</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th width="40"><input type="checkbox" class="form-check-input"></th>
+                            <th>ID</th>
+                            <th data-label="Username">Username</th>
+                            <th data-label="First Name">First Name</th>
+                            <th data-label="Last Name">Last Name</th>
+                            <th data-label="Email">Email</th>
+                            <th data-label="Status">Is Active</th>
+                            <th data-label="Staff">Is Staff</th>
+                            <th data-label="Admin">Is Superuser</th>
+                            <th data-label="Joined">Date Joined</th>
+                            <th data-label="Last Login">Last Login</th>
+                            <th data-label="Actions">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="checkbox" class="form-check-input"></td>
+                            <td class="fw-bold text-primary">123</td>
+                            <td data-label="Username">john_doe</td>
+                            <td data-label="First Name">John</td>
+                            <td data-label="Last Name">Doe</td>
+                            <td data-label="Email">johndoe@example.com</td>
+                            <td data-label="Status"><span class="badge bg-success">Active</span></td>
+                            <td data-label="Staff"><span class="badge bg-info">Yes</span></td>
+                            <td data-label="Admin"><span class="badge bg-warning">No</span></td>
+                            <td data-label="Joined">2023-01-15</td>
+                            <td data-label="Last Login">2023-02-20</td>
+                            <td data-label="Actions">
+                                <div class="action-column">
+                                    <div class="action-row">
+                                        <button class="btn btn-sm btn-outline-warning" id="editCustomer">
+                                            <i class="fas fa-edit me-1"></i> Edit
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" id="deleteCustomer">
+                                            <i class="fas fa-trash me-1"></i> Delete
+                                        </button>
+                                    </div>
+                                    <div class="action-row">
+                                        {% comment %} <button class="btn btn-sm btn-outline-info" id="profileCustomer">
+                                            <i class="fas fa-user me-1"></i> Profile
+                                        </button> {% endcomment %}
+                                        <button class="btn btn-sm btn-outline-secondary" id="orderHistoryCustomer">
+                                            <i class="fas fa-history me-1"></i>  Order History
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="form-check-input"></td>
+                            <td class="fw-bold text-primary">124</td>
+                            <td data-label="Username">jane_doe</td>
+                            <td data-label="First Name">Jane</td>
+                            <td data-label="Last Name">Doe</td>
+                            <td data-label="Email">janedoe@example.com</td>
+                            <td data-label="Status"><span class="badge bg-danger">Inactive</span></td>
+                            <td data-label="Staff"><span class="badge bg-danger">No</span></td>
+                            <td data-label="Admin"><span class="badge bg-success">Yes</span></td>
+                            <td data-label="Joined">2022-05-10</td>
+                            <td data-label="Last Login">2022-08-11</td>
+                            <td data-label="Actions">
+                                <div class="action-column">
+                                    <div class="action-row">
+                                        <button class="btn btn-sm btn-outline-warning" id="editCustomer">
+                                            <i class="fas fa-edit me-1"></i> Edit
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" id="deleteCustomer">
+                                            <i class="fas fa-trash me-1"></i> Delete
+                                        </button>
+                                    </div>
+                                    <div class="action-row">
+                                        <button class="btn btn-sm btn-outline-info" id="profileCustomer">
+                                            <i class="fas fa-user me-1"></i> Profile
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" id="orderHistoryCustomer">
+                                            <i class="fas fa-history me-1"></i> Order History
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="form-check-input"></td>
+                            <td class="fw-bold text-primary">125</td>
+                            <td data-label="Username">sam_smith</td>
+                            <td data-label="First Name">Sam</td>
+                            <td data-label="Last Name">Smith</td>
+                            <td data-label="Email">samsmith@example.com</td>
+                            <td data-label="Status"><span class="badge bg-success">Active</span></td>
+                            <td data-label="Staff"><span class="badge bg-info">Yes</span></td>
+                            <td data-label="Admin"><span class="badge bg-warning">No</span></td>
+                            <td data-label="Joined">2021-11-22</td>
+                            <td data-label="Last Login">2022-01-12</td>
+                            <td data-label="Actions">
+                                <div class="action-column">
+                                    <div class="action-row">
+                                        <button class="btn btn-sm btn-outline-warning" id="editCustomer">
+                                            <i class="fas fa-edit me-1"></i> Edit
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" id="deleteCustomer">
+                                            <i class="fas fa-trash me-1"></i> Delete
+                                        </button>
+                                    </div>
+                                    <div class="action-row">
+                                        <button class="btn btn-sm btn-outline-info" id="profileCustomer">
+                                            <i class="fas fa-user me-1"></i> Profile
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" id="orderHistoryCustomer">
+                                            <i class="fas fa-history me-1"></i> Order History
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="form-check-input"></td>
+                            <td class="fw-bold text-primary">126</td>
+                            <td data-label="Username">alice_wonder</td>
+                            <td data-label="First Name">Alice</td>
+                            <td data-label="Last Name">Wonder</td>
+                            <td data-label="Email">alice@example.com</td>
+                            <td data-label="Status"><span class="badge bg-success">Active</span></td>
+                            <td data-label="Staff"><span class="badge bg-info">Yes</span></td>
+                            <td data-label="Admin"><span class="badge bg-success">Yes</span></td>
+                            <td data-label="Joined">2023-03-05</td>
+                            <td data-label="Last Login">2023-04-18</td>
+                            <td data-label="Actions">
+                                <div class="action-column">
+                                    <div class="action-row">
+                                        <button class="btn btn-sm btn-outline-warning" id="editCustomer">
+                                            <i class="fas fa-edit me-1"></i> Edit
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" id="deleteCustomer">
+                                            <i class="fas fa-trash me-1"></i> Delete
+                                        </button>
+                                    </div>
+                                    <div class="action-row">
+                                        <button class="btn btn-sm btn-outline-info" id="profileCustomer">
+                                            <i class="fas fa-user me-1"></i> Profile
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" id="orderHistoryCustomer">
+                                            <i class="fas fa-history me-1"></i> Order History
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="small text-muted">Showing 1 to 4 of 24 entries</div>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1">Previous</a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- User Form Modal -->
+<div class="modal-overlay" id="customerModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title"><i class="fas fa-user-edit me-2"></i> User Information</h5>
+            <button type="button" class="btn-close ms-auto" id="closeBtn" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="customerForm">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="first_name" class="form-label">First Name</label>
+                        <input type="text" class="form-control" id="first_name" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="last_name" class="form-label">Last Name</label>
+                        <input type="text" class="form-control" id="last_name" required>
+                    </div>
+                    <div class="col-12">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" required>
+                    </div>
+                    <div class="col-12">
+                        <label for="phone" class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control" id="phone">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="is_active" class="form-label">Status</label>
+                        <select class="form-select" id="is_active" required>
+                            <option value="1">Active</option>
+                            <option value="0">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="is_staff" class="form-label">Staff</label>
+                        <select class="form-select" id="is_staff" required>
+                            <option value="0">No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="is_superuser" class="form-label">Admin</label>
+                        <select class="form-select" id="is_superuser" required>
+                            <option value="0">No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i> Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Order History Model -->
+<div class="modal-overlay" id="orderHistoryModal">
+  <div class="modal-content">
+      <div class="modal-header bg-dark">
+          <h5 class="modal-title"><i class="fas fa-user-edit me-2"></i> Order History - John Doe</h5>
+          <button type="button" class="btn-close ms-auto" id="closeOrderHistoryBtn" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+          <!-- Summary Row -->
+          <div class="row g-3 mb-3">
+              <div class="col-12 col-md-6">
+                  <div class="card h-100">
+                      <div class="card-header bg-light py-2">
+                          <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Order Summary</h6>
+                      </div>
+                      <div class="card-body">
+                          <div class="row small">
+                              <div class="col-6">
+                                  <p class="text-muted mb-1">Order ID</p>
+                                  <p class="mb-2 text-truncate">#ORD-12345</p>
+                              </div>
+                              <div class="col-6">
+                                  <p class="text-muted mb-1">Order Date</p>
+                                  <p class="mb-2">2023-05-15 14:32</p>
+                              </div>
+                              <div class="col-6">
+                                  <p class="text-muted mb-1">Status</p>
+                                  <p class="mb-2"><span class="badge bg-success">Completed</span></p>
+                              </div>
+                              <div class="col-6">
+                                  <p class="text-muted mb-1">Total Amount</p>
+                                  <p class="mb-2">$245.99</p>
+                              </div>
+                              <div class="col-12">
+                                  <p class="text-muted mb-1">Last Updated</p>
+                                  <p class="mb-0">2023-05-18 10:15</p>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+              <div class="col-12 col-md-6">
+                  <div class="card h-100">
+                      <div class="card-header bg-light py-2">
+                          <h6 class="mb-0"><i class="fas fa-credit-card me-2"></i>Payment Details</h6>
+                      </div>
+                      <div class="card-body">
+                          <div class="row small">
+                              <div class="col-6">
+                                  <p class="text-muted mb-1">Payment Method</p>
+                                  <p class="mb-2">Credit Card</p>
+                              </div>
+                              <div class="col-6">
+                                  <p class="text-muted mb-1">Payment Status</p>
+                                  <p class="mb-2"><span class="badge bg-success">Paid</span></p>
+                              </div>
+                              <div class="col-6">
+                                  <p class="text-muted mb-1">Payment Amount</p>
+                                  <p class="mb-2">$245.99</p>
+                              </div>
+                              <div class="col-6">
+                                  <p class="text-muted mb-1">Transaction ID</p>
+                                  <p class="mb-2 text-truncate">TXN-789456123</p>
+                              </div>
+                              <div class="col-12">
+                                  <p class="text-muted mb-1">Payment Date</p>
+                                  <p class="mb-0">2023-05-15 14:35</p>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+          <!-- Items Ordered Card -->
+          <div class="card mb-3">
+              <div class="card-header bg-light py-2">
+                  <h6 class="mb-0"><i class="fas fa-box-open me-2"></i>Items Ordered</h6>
+              </div>
+              <div class="card-body p-0">
+                  <div class="table-responsive" style="max-height: 300px;">
+                      <table class="table table-sm table-hover mb-0">
+                          <thead>
+                              <tr>
+                                  <th>Product</th>
+                                  <th class="d-none d-sm-table-cell">Category</th>
+                                  <th>Price</th>
+                                  <th>Qty</th>
+                                  <th>Subtotal</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              <tr>
+                                  <td>
+                                      <div class="d-flex align-items-center">
+                                          <img src="https://via.placeholder.com/40" alt="Product" class="img-thumbnail me-2" style="width: 40px; height: 40px;">
+                                          <div>
+                                              <h6 class="mb-0 small">Premium Wireless Headphones</h6>
+                                              <small class="text-muted d-block d-sm-none">Electronics</small>
+                                          </div>
+                                      </div>
+                                  </td>
+                                  <td class="d-none d-sm-table-cell">Electronics</td>
+                                  <td>$199.99</td>
+                                  <td>1</td>
+                                  <td>$199.99</td>
+                              </tr>
+                              <!-- More rows... -->
+                          </tbody>
+                          <tfoot>
+                              <tr>
+                                  <td colspan="4" class="text-end fw-bold small">Subtotal</td>
+                                  <td class="small">$241.96</td>
+                              </tr>
+                              <tr>
+                                  <td colspan="4" class="text-end fw-bold small">Shipping</td>
+                                  <td class="small">$4.03</td>
+                              </tr>
+                              <tr>
+                                  <td colspan="4" class="text-end fw-bold small">Total</td>
+                                  <td class="small">$245.99</td>
+                              </tr>
+                          </tfoot>
+                      </table>
+                  </div>
+              </div>
+          </div>
+
+          <!-- Order Updates Card -->
+          <div class="card">
+              <div class="card-header bg-light py-2">
+                  <h6 class="mb-0"><i class="fas fa-truck me-2"></i>Order Updates</h6>
+              </div>
+              <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                  <div class="timeline small">
+                      <div class="timeline-item">
+                          <div class="timeline-item-marker">
+                              <div class="timeline-item-marker-indicator bg-success"></div>
+                          </div>
+                          <div class="timeline-item-content">
+                              <div class="d-flex justify-content-between">
+                                  <p class="mb-1 fw-bold">Order Completed</p>
+                                  <small class="text-muted">2023-05-18 10:15</small>
+                              </div>
+                              <p class="mb-1">Your order has been successfully delivered.</p>
+                              <p class="mb-0"><span class="badge bg-success">Delivered</span></p>
+                          </div>
+                      </div>
+                      <!-- More timeline items... -->
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Modal toggle functionality
+        const editButtons = document.querySelectorAll('#editCustomer');
+        const customerModal = document.getElementById('customerModal');
+        const closeModal = document.getElementById('closeBtn');
+        
+        if (editButtons) {
+            editButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    document.body.classList.add('modal-open');
+                    customerModal.classList.add('show');
+                });
+            });
+        }
+        
+        if (closeModal) {
+            closeModal.addEventListener('click', function() {
+                document.body.classList.remove('modal-open');
+                customerModal.classList.remove('show');
+            });
+        }
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            if (event.target === customerModal) {
+                document.body.classList.remove('modal-open');
+                customerModal.classList.remove('show');
+            }
+        });
+        
+        // Select all checkboxes
+        const selectAllCheckbox = document.querySelector('thead .form-check-input');
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function() {
+                const checkboxes = document.querySelectorAll('tbody .form-check-input');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = selectAllCheckbox.checked;
+                });
+            });
+        }
+        
+        // Search functionality
+        const searchInput = document.querySelector('.search-box input');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function() {
+                const searchTerm = this.value.toLowerCase();
+                const rows = document.querySelectorAll('tbody tr');
+                
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(searchTerm) ? '' : 'none';
+                });
+            });
+        }
+        
+        // Filter functionality
+        const statusFilter = document.querySelectorAll('.filter-dropdown select')[0];
+        const roleFilter = document.querySelectorAll('.filter-dropdown select')[1];
+        
+        if (statusFilter && roleFilter) {
+            [statusFilter, roleFilter].forEach(filter => {
+                filter.addEventListener('change', function() {
+                    const statusValue = statusFilter.value;
+                    const roleValue = roleFilter.value;
+                    const rows = document.querySelectorAll('tbody tr');
+                    
+                    rows.forEach(row => {
+                        const statusCell = row.querySelector('td:nth-child(7)');
+                        const staffCell = row.querySelector('td:nth-child(8)');
+                        const adminCell = row.querySelector('td:nth-child(9)');
+                        
+                        const statusMatch = statusValue === 'all' || 
+                                          (statusValue === '1' && statusCell.textContent.includes('Active')) ||
+                                          (statusValue === '0' && statusCell.textContent.includes('Inactive'));
+                        
+                        const roleMatch = roleValue === 'all' ||
+                                        (roleValue === 'staff' && staffCell.textContent.includes('Yes')) ||
+                                        (roleValue === 'admin' && adminCell.textContent.includes('Yes')) ||
+                                        (roleValue === 'customer' && staffCell.textContent.includes('No') && adminCell.textContent.includes('No'));
+                        
+                        row.style.display = (statusMatch && roleMatch) ? '' : 'none';
+                    });
+                });
+            });
+        }
+    });
+</script>
+
+<!-- Order History Model -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+      // Order History Modal Toggle
+      const orderHistoryButtons = document.querySelectorAll('#orderHistoryCustomer');
+      const orderHistoryModal = document.getElementById('orderHistoryModal');
+      const closeOrderHistoryBtn = document.getElementById('closeOrderHistoryBtn');
+      
+      if (orderHistoryButtons) {
+          orderHistoryButtons.forEach(button => {
+              button.addEventListener('click', function() {
+                  // You would typically fetch order data here based on the user
+                  // For demo, we're just showing the modal
+                  document.body.classList.add('modal-open');
+                  orderHistoryModal.classList.add('show');
+              });
+          });
+      }
+      
+      if (closeOrderHistoryBtn) {
+          closeOrderHistoryBtn.addEventListener('click', function() {
+              document.body.classList.remove('modal-open');
+              orderHistoryModal.classList.remove('show');
+          });
+      }
+      
+      // Close modal when clicking outside
+      window.addEventListener('click', function(event) {
+          if (event.target === orderHistoryModal) {
+              document.body.classList.remove('modal-open');
+              orderHistoryModal.classList.remove('show');
+          }
+      });
+  });
+</script>
+
+{% endif %}
+{% endblock %}

@@ -1,0 +1,645 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Reporting & Analytics{% endblock %}
+
+{% block adminbody %}
+
+{% if request.user.is_authenticated and request.user.is_staff and request.user.is_active %}
+
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0"><i class="fas fa-chart-line me-2 text-primary"></i> Reporting & Analytics</h2>
+            <p class="text-muted mb-0">Track performance metrics and business insights</p>
+        </div>
+        <div>
+            <button class="btn btn-outline-secondary me-2" id="exportReportBtn">
+                <i class="fas fa-file-export me-1"></i> Export
+            </button>
+            <div class="btn-group">
+                <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-calendar-alt me-1"></i> Last 30 Days
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#">Today</a></li>
+                    <li><a class="dropdown-item" href="#">Last 7 Days</a></li>
+                    <li><a class="dropdown-item active" href="#">Last 30 Days</a></li>
+                    <li><a class="dropdown-item" href="#">This Month</a></li>
+                    <li><a class="dropdown-item" href="#">Last Month</a></li>
+                    <li><a class="dropdown-item" href="#">Custom Range</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats Row -->
+    <div class="row g-4 mb-4">
+        <!-- Total Revenue -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card shadow-sm" style="border-left: 4px solid #4e73df;">
+                <div class="card-body">
+                    <h6 class="text-muted small text-uppercase fw-bold">Total Revenue</h6>
+                    <h3 class="fw-bold mb-1">$24,780</h3>
+                    <div class="text-success small">
+                        <i class="fas fa-arrow-up me-1"></i> 12.5% from last period
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card shadow-sm" style="border-left: 4px solid #1cc88a;">
+                <div class="card-body">
+                    <h6 class="text-muted small text-uppercase fw-bold">Orders</h6>
+                    <h3 class="fw-bold mb-1">1,428</h3>
+                    <div class="text-success small">
+                        <i class="fas fa-arrow-up me-1"></i> 8.3% from last period
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Avg. Order Value -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card shadow-sm" style="border-left: 4px solid #36b9cc;">
+                <div class="card-body">
+                    <h6 class="text-muted small text-uppercase fw-bold">Avg. Order Value</h6>
+                    <h3 class="fw-bold mb-1">$89.54</h3>
+                    <div class="text-danger small">
+                        <i class="fas fa-arrow-down me-1"></i> 2.1% from last period
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conversion Rate -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card shadow-sm" style="border-left: 4px solid #f6c23e;">
+                <div class="card-body">
+                    <h6 class="text-muted small text-uppercase fw-bold">Conversion Rate</h6>
+                    <h3 class="fw-bold mb-1">3.25%</h3>
+                    <div class="text-success small">
+                        <i class="fas fa-arrow-up me-1"></i> 0.5% from last period
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row g-4">
+        <!-- Revenue Chart -->
+        <div class="col-12 col-lg-8">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center border-bottom">
+                    <h5 class="mb-0">Revenue Overview</h5>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-filter me-1"></i> Filter
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><h6 class="dropdown-header">View By</h6></li>
+                            <li><a class="dropdown-item active" href="#">Daily</a></li>
+                            <li><a class="dropdown-item" href="#">Weekly</a></li>
+                            <li><a class="dropdown-item" href="#">Monthly</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-download me-2"></i> Export Data</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="revenueChart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sales Channels -->
+        <div class="col-12 col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">Sales Channels</h5>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <div class="chart-pie">
+                        <canvas id="salesChannelChart" height="250"></canvas>
+                    </div>
+                    <div class="mt-auto pt-3">
+                        <div class="row g-2 text-center">
+                            <div class="col-4">
+                                <span class="d-block text-primary fw-bold">62%</span>
+                                <span class="d-block small text-muted">Online</span>
+                            </div>
+                            <div class="col-4">
+                                <span class="d-block text-success fw-bold">23%</span>
+                                <span class="d-block small text-muted">Retail</span>
+                            </div>
+                            <div class="col-4">
+                                <span class="d-block text-warning fw-bold">15%</span>
+                                <span class="d-block small text-muted">Wholesale</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sales Reports Section -->
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center border-bottom">
+                    <h5 class="mb-0">Detailed Sales Reports</h5>
+                    <div>
+                        <select class="form-select form-select-sm w-auto d-inline-block me-2">
+                            <option>All Categories</option>
+                            <option>Electronics</option>
+                            <option>Apparel</option>
+                            <option>Home Goods</option>
+                        </select>
+                        <button class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-download me-1"></i> Export
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th class="text-end">Orders</th>
+                                    <th class="text-end">Gross Sales</th>
+                                    <th class="text-end">Discounts</th>
+                                    <th class="text-end">Returns</th>
+                                    <th class="text-end">Net Sales</th>
+                                    <th class="text-end">Tax</th>
+                                    <th class="text-end">Shipping</th>
+                                    <th class="text-end">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Today</td>
+                                    <td class="text-end">42</td>
+                                    <td class="text-end">$3,842.50</td>
+                                    <td class="text-end">-$284.00</td>
+                                    <td class="text-end">-$120.50</td>
+                                    <td class="text-end">$3,438.00</td>
+                                    <td class="text-end">$275.04</td>
+                                    <td class="text-end">$336.00</td>
+                                    <td class="text-end fw-bold">$4,049.04</td>
+                                </tr>
+                                <tr>
+                                    <td>Yesterday</td>
+                                    <td class="text-end">38</td>
+                                    <td class="text-end">$3,521.75</td>
+                                    <td class="text-end">-$198.25</td>
+                                    <td class="text-end">-$85.00</td>
+                                    <td class="text-end">$3,238.50</td>
+                                    <td class="text-end">$259.08</td>
+                                    <td class="text-end">$304.00</td>
+                                    <td class="text-end fw-bold">$3,801.58</td>
+                                </tr>
+                                <tr>
+                                    <td>May 15</td>
+                                    <td class="text-end">51</td>
+                                    <td class="text-end">$4,672.30</td>
+                                    <td class="text-end">-$325.40</td>
+                                    <td class="text-end">-$142.75</td>
+                                    <td class="text-end">$4,204.15</td>
+                                    <td class="text-end">$336.33</td>
+                                    <td class="text-end">$408.00</td>
+                                    <td class="text-end fw-bold">$4,948.48</td>
+                                </tr>
+                                <tr>
+                                    <td>May 14</td>
+                                    <td class="text-end">47</td>
+                                    <td class="text-end">$4,320.60</td>
+                                    <td class="text-end">-$298.75</td>
+                                    <td class="text-end">-$132.50</td>
+                                    <td class="text-end">$3,889.35</td>
+                                    <td class="text-end">$311.15</td>
+                                    <td class="text-end">$376.00</td>
+                                    <td class="text-end fw-bold">$4,576.50</td>
+                                </tr>
+                                <tr>
+                                    <td>May 13</td>
+                                    <td class="text-end">35</td>
+                                    <td class="text-end">$3,125.40</td>
+                                    <td class="text-end">-$187.50</td>
+                                    <td class="text-end">-$95.25</td>
+                                    <td class="text-end">$2,842.65</td>
+                                    <td class="text-end">$227.41</td>
+                                    <td class="text-end">$280.00</td>
+                                    <td class="text-end fw-bold">$3,350.06</td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th>Period Total</th>
+                                    <th class="text-end">213</th>
+                                    <th class="text-end">$19,482.55</th>
+                                    <th class="text-end">-$1,293.90</th>
+                                    <th class="text-end">-$575.00</th>
+                                    <th class="text-end">$17,613.65</th>
+                                    <th class="text-end">$1,409.09</th>
+                                    <th class="text-end">$1,704.00</th>
+                                    <th class="text-end">$20,726.74</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-white">
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0 justify-content-center">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#"><i class="fas fa-chevron-left"></i></a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#"><i class="fas fa-chevron-right"></i></a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Performance Section -->
+        <div class="col-12">
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center border-bottom">
+                    <h5 class="mb-0">Product Performance</h5>
+                    <div>
+                        <select class="form-select form-select-sm w-auto d-inline-block me-2" id="productMetricSelect">
+                            <option value="revenue">Revenue</option>
+                            <option value="units">Units Sold</option>
+                            <option value="profit">Profit Margin</option>
+                            <option value="returns">Return Rate</option>
+                        </select>
+                        <button class="btn btn-sm btn-outline-primary" id="exportProductBtn">
+                            <i class="fas fa-download me-1"></i> Export
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-bar mb-4">
+                        <canvas id="productPerformanceChart" height="300"></canvas>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th class="text-end">SKU</th>
+                                    <th class="text-end">Price</th>
+                                    <th class="text-end">Sold</th>
+                                    <th class="text-end">Revenue</th>
+                                    <th class="text-end">Cost</th>
+                                    <th class="text-end">Profit</th>
+                                    <th class="text-end">Margin</th>
+                                    <th class="text-end">Returns</th>
+                                    <th class="text-end">Return Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="https://via.placeholder.com/40" width="40" height="40" class="rounded me-2" alt="Product">
+                                            <span>Premium Headphones</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-end">PH-1000</td>
+                                    <td class="text-end">$129.99</td>
+                                    <td class="text-end">85</td>
+                                    <td class="text-end">$11,049.15</td>
+                                    <td class="text-end">$7,514.62</td>
+                                    <td class="text-end">$3,534.53</td>
+                                    <td class="text-end text-success">32.0%</td>
+                                    <td class="text-end">4</td>
+                                    <td class="text-end text-danger">4.7%</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="https://via.placeholder.com/40" width="40" height="40" class="rounded me-2" alt="Product">
+                                            <span>Wireless Earbuds</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-end">WE-2000</td>
+                                    <td class="text-end">$79.99</td>
+                                    <td class="text-end">125</td>
+                                    <td class="text-end">$9,998.75</td>
+                                    <td class="text-end">$7,198.88</td>
+                                    <td class="text-end">$2,799.87</td>
+                                    <td class="text-end text-success">28.0%</td>
+                                    <td class="text-end">7</td>
+                                    <td class="text-end text-danger">5.6%</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="https://via.placeholder.com/40" width="40" height="40" class="rounded me-2" alt="Product">
+                                            <span>Smart Watch Pro</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-end">SW-3000</td>
+                                    <td class="text-end">$199.99</td>
+                                    <td class="text-end">45</td>
+                                    <td class="text-end">$8,999.55</td>
+                                    <td class="text-end">$5,849.71</td>
+                                    <td class="text-end">$3,149.84</td>
+                                    <td class="text-end text-success">35.0%</td>
+                                    <td class="text-end">2</td>
+                                    <td class="text-end text-danger">4.4%</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="https://via.placeholder.com/40" width="40" height="40" class="rounded me-2" alt="Product">
+                                            <span>Bluetooth Speaker</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-end">BS-4000</td>
+                                    <td class="text-end">$89.99</td>
+                                    <td class="text-end">62</td>
+                                    <td class="text-end">$5,579.38</td>
+                                    <td class="text-end">$4,184.54</td>
+                                    <td class="text-end">$1,394.84</td>
+                                    <td class="text-end text-success">25.0%</td>
+                                    <td class="text-end">3</td>
+                                    <td class="text-end text-danger">4.8%</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="https://via.placeholder.com/40" width="40" height="40" class="rounded me-2" alt="Product">
+                                            <span>Phone Case</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-end">PC-5000</td>
+                                    <td class="text-end">$24.99</td>
+                                    <td class="text-end">220</td>
+                                    <td class="text-end">$5,497.80</td>
+                                    <td class="text-end">$4,508.20</td>
+                                    <td class="text-end">$989.60</td>
+                                    <td class="text-end text-success">18.0%</td>
+                                    <td class="text-end">12</td>
+                                    <td class="text-end text-danger">5.5%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-white">
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0 justify-content-center">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#"><i class="fas fa-chevron-left"></i></a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#"><i class="fas fa-chevron-right"></i></a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Revenue Line Chart
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        const revenueChart = new Chart(revenueCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [{
+                    label: 'Revenue',
+                    data: [4500, 5200, 4800, 6100, 7200, 8100, 8500, 9200, 8800, 9500, 10100, 11200],
+                    backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                    borderColor: 'rgba(78, 115, 223, 1)',
+                    pointBackgroundColor: 'rgba(78, 115, 223, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverRadius: 5,
+                    pointHoverBackgroundColor: 'rgba(78, 115, 223, 1)',
+                    pointHoverBorderColor: '#fff',
+                    pointHitRadius: 10,
+                    pointBorderWidth: 2,
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: "rgb(255,255,255)",
+                        bodyColor: "#858796",
+                        titleMarginBottom: 10,
+                        titleColor: '#6e707e',
+                        titleFontSize: 14,
+                        borderColor: '#dddfeb',
+                        borderWidth: 1,
+                        padding: 15,
+                        displayColors: false,
+                        intersect: false,
+                        mode: 'index',
+                        caretPadding: 10,
+                        callbacks: {
+                            label: function(context) {
+                                return '$' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#858796'
+                        }
+                    },
+                    y: {
+                        ticks: {
+                            color: '#858796',
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Sales Channel Pie Chart
+        const salesChannelCtx = document.getElementById('salesChannelChart').getContext('2d');
+        const salesChannelChart = new Chart(salesChannelCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ["Online Store", "Retail Stores", "Wholesale"],
+                datasets: [{
+                    data: [62, 23, 15],
+                    backgroundColor: ['#4e73df', '#1cc88a', '#f6c23e'],
+                    hoverBackgroundColor: ['#2e59d9', '#17a673', '#dda20a'],
+                    hoverBorderColor: "rgba(234, 236, 244, 1)",
+                }],
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        backgroundColor: "rgb(255,255,255)",
+                        bodyColor: "#858796",
+                        borderColor: '#dddfeb',
+                        borderWidth: 1,
+                        padding: 15,
+                        displayColors: true,
+                        caretPadding: 10,
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ' + context.raw + '%';
+                            }
+                        }
+                    },
+                    legend: {
+                        display: false
+                    },
+                },
+                cutout: '70%',
+            },
+        });
+
+        // Product Performance Bar Chart
+        const productPerfCtx = document.getElementById('productPerformanceChart').getContext('2d');
+        const productPerfChart = new Chart(productPerfCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Premium Headphones', 'Wireless Earbuds', 'Smart Watch Pro', 'Bluetooth Speaker', 'Phone Case'],
+                datasets: [{
+                    label: 'Revenue',
+                    data: [11049.15, 9998.75, 8999.55, 5579.38, 5497.80],
+                    backgroundColor: 'rgba(78, 115, 223, 0.8)',
+                    borderColor: 'rgba(78, 115, 223, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return '$' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    },
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        formatter: function(value) {
+                            return '$' + Math.round(value).toLocaleString();
+                        },
+                        color: '#4e73df',
+                        font: {
+                            weight: 'bold'
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            },
+            plugins: [ChartDataLabels]
+        });
+
+        // Change chart data when metric selection changes
+        document.getElementById('productMetricSelect').addEventListener('change', function() {
+            const metric = this.value;
+            
+            // In a real app, you would fetch new data based on the selected metric
+            // This is just a demonstration of how to update the chart
+            if (metric === 'units') {
+                productPerfChart.data.datasets[0].data = [85, 125, 45, 62, 220];
+                productPerfChart.options.plugins.tooltip.callbacks.label = function(context) {
+                    return context.parsed.y + ' units';
+                };
+                productPerfChart.options.plugins.datalabels.formatter = function(value) {
+                    return Math.round(value) + ' units';
+                };
+            } else if (metric === 'profit') {
+                productPerfChart.data.datasets[0].data = [3534.53, 2799.87, 3149.84, 1394.84, 989.60];
+                productPerfChart.options.plugins.tooltip.callbacks.label = function(context) {
+                    return '$' + context.parsed.y.toLocaleString();
+                };
+                productPerfChart.options.plugins.datalabels.formatter = function(value) {
+                    return '$' + Math.round(value).toLocaleString();
+                };
+            } else if (metric === 'returns') {
+                productPerfChart.data.datasets[0].data = [4.7, 5.6, 4.4, 4.8, 5.5];
+                productPerfChart.options.plugins.tooltip.callbacks.label = function(context) {
+                    return context.parsed.y + '%';
+                };
+                productPerfChart.options.plugins.datalabels.formatter = function(value) {
+                    return Math.round(value) + '%';
+                };
+            } else { // revenue (default)
+                productPerfChart.data.datasets[0].data = [11049.15, 9998.75, 8999.55, 5579.38, 5497.80];
+                productPerfChart.options.plugins.tooltip.callbacks.label = function(context) {
+                    return '$' + context.parsed.y.toLocaleString();
+                };
+                productPerfChart.options.plugins.datalabels.formatter = function(value) {
+                    return '$' + Math.round(value).toLocaleString();
+                };
+            }
+            
+            productPerfChart.update();
+        });
+    });
+</script>
+
+{% endif %}
+{% endblock %}

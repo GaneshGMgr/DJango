@@ -1,0 +1,349 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Inventory Adjustment{% endblock %}
+
+{% block adminbody %}
+
+{% if request.user.is_authenticated and request.user.is_staff and request.user.is_active %}
+
+<div class="container-fluid py-4">
+    <!-- Enhanced Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <div>
+            <h1 class="h3 mb-1 text-gray-800">
+                <i class="fas fa-boxes text-primary me-2"></i>
+                Inventory Adjustment
+            </h1>
+            <p class="mb-0 text-muted small">Manage stock levels and track inventory changes</p>
+        </div>
+        <div>
+            <button class="btn btn-sm btn-outline-secondary me-2">
+                <i class="fas fa-sync-alt me-1"></i> Refresh
+            </button>
+            <a href="{% url 'admin-dashboard' %}" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-arrow-left me-1"></i> Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Improved Adjustment Form Card -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3 border-bottom">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-edit me-2"></i>
+                    Stock Adjustment Form
+                </h6>
+                <span class="badge bg-light text-dark">
+                    <i class="fas fa-info-circle me-1"></i> Required fields *
+                </span>
+            </div>
+        </div>
+        
+        <div class="card-body">
+            <form class="needs-validation" novalidate>
+                <!-- Product Hierarchy Section -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <label for="productSelect" class="form-label fw-bold text-gray-700 required">
+                            <i class="fas fa-box me-1"></i>
+                            Product *
+                        </label>
+                        <select class="form-select" id="productSelect" required>
+                            <option value="" selected disabled>Select product...</option>
+                            <option value="laptop">Laptop</option>
+                            <option value="smartphone">Smartphone</option>
+                            <option value="headphones">Headphones</option>
+                        </select>
+                        <div class="invalid-feedback">Please select a product</div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="categorySelect" class="form-label fw-bold text-gray-700 required">
+                            <i class="fas fa-tag me-1"></i>
+                            Category *
+                        </label>
+                        <select class="form-select" id="categorySelect" required>
+                            <option value="" selected disabled>Select category...</option>
+                            <option value="electronics">Electronics</option>
+                            <option value="clothing">Clothing</option>
+                            <option value="furniture">Furniture</option>
+                        </select>
+                        <div class="invalid-feedback">Please select a category</div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="subcategorySelect" class="form-label fw-bold text-gray-700">
+                            <i class="fas fa-tags me-1"></i>
+                            Subcategory
+                        </label>
+                        <select class="form-select" id="subcategorySelect">
+                            <option value="" selected>All subcategories</option>
+                            <option value="audio">Audio</option>
+                            <option value="computers">Computers</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Variant & SKU Section -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label for="variantSelect" class="form-label fw-bold text-gray-700">
+                            <i class="fas fa-list-ul me-1"></i>
+                            Variant
+                        </label>
+                        <select class="form-select" id="variantSelect">
+                            <option value="" selected>No variant</option>
+                            <option value="black">Black</option>
+                            <option value="white">White</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-gray-700">
+                            <i class="fas fa-barcode me-1"></i>
+                            SKU
+                        </label>
+                        <div class="input-group">
+                            <input type="text" class="form-control bg-light" id="skuDisplay" value="-" readonly>
+                            <button class="btn btn-outline-secondary" type="button" title="Scan barcode">
+                                <i class="fas fa-camera"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stock Information Card -->
+                <div class="card bg-light border-0 mb-4">
+                    <div class="card-body p-3">
+                        <div class="row g-0 text-center">
+                            <div class="col-md-4 border-end">
+                                <div class="p-2">
+                                    <div class="text-muted small mb-1">Current Stock</div>
+                                    <h3 class="mb-0 fw-bold"><span id="currentStock">-</span></h3>
+                                </div>
+                            </div>
+                            <div class="col-md-4 border-end">
+                                <div class="p-2">
+                                    <div class="text-muted small mb-1">Threshold</div>
+                                    <h3 class="mb-0 fw-bold"><span id="stockThreshold">-</span></h3>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-2">
+                                    <div class="text-muted small mb-1">Status</div>
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary" id="stockStatus">
+                                        <i class="fas fa-question-circle me-1"></i> Select product
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Adjustment Details Card -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-2">
+                        <h6 class="mb-0 fw-bold text-gray-700">
+                            <i class="fas fa-sliders-h me-1"></i>
+                            Adjustment Details
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold text-gray-700 required">
+                                    <i class="fas fa-exchange-alt me-1"></i>
+                                    Type *
+                                </label>
+                                <div class="btn-group w-100 shadow-sm" role="group">
+                                    <input type="radio" class="btn-check" name="adjustmentType" id="addStock" autocomplete="off" checked>
+                                    <label class="btn btn-outline-success" for="addStock">
+                                        <i class="fas fa-plus-circle me-1"></i> Add
+                                    </label>
+                                    <input type="radio" class="btn-check" name="adjustmentType" id="removeStock" autocomplete="off">
+                                    <label class="btn btn-outline-danger" for="removeStock">
+                                        <i class="fas fa-minus-circle me-1"></i> Remove
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="adjustmentQty" class="form-label fw-bold text-gray-700 required">
+                                    <i class="fas fa-hashtag me-1"></i>
+                                    Quantity *
+                                </label>
+                                <div class="input-group">
+                                    <button class="btn btn-outline-secondary" type="button" id="decrementQty">-</button>
+                                    <input type="number" class="form-control text-center" id="adjustmentQty" min="1" value="1" required>
+                                    <button class="btn btn-outline-secondary" type="button" id="incrementQty">+</button>
+                                </div>
+                                <div class="invalid-feedback">Please enter valid quantity</div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="newStockLevel" class="form-label fw-bold text-gray-700">
+                                    <i class="fas fa-calculator me-1"></i>
+                                    New Level
+                                </label>
+                                <input type="text" class="form-control bg-light" id="newStockLevel" value="-" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reason & Notes Card -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-2">
+                        <h6 class="mb-0 fw-bold text-gray-700">
+                            <i class="fas fa-clipboard-list me-1"></i>
+                            Adjustment Information
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="adjustmentReason" class="form-label fw-bold text-gray-700 required">
+                                    <i class="fas fa-question-circle me-1"></i>
+                                    Reason *
+                                </label>
+                                <select class="form-select" id="adjustmentReason" required>
+                                    <option value="" disabled selected>Select reason...</option>
+                                    <option value="restock">Restock from supplier</option>
+                                    <option value="damage">Damaged goods</option>
+                                    <option value="return">Customer return</option>
+                                </select>
+                                <div class="invalid-feedback">Please select a reason</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="referenceNumber" class="form-label fw-bold text-gray-700">
+                                    <i class="fas fa-file-invoice me-1"></i>
+                                    Reference
+                                </label>
+                                <input type="text" class="form-control" id="referenceNumber" placeholder="PO-12345">
+                            </div>
+                            
+                            <div class="col-12">
+                                <label for="adjustmentNotes" class="form-label fw-bold text-gray-700">
+                                    <i class="fas fa-sticky-note me-1"></i>
+                                    Notes
+                                </label>
+                                <textarea class="form-control" id="adjustmentNotes" rows="2" placeholder="Additional details..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="d-flex justify-content-between border-top pt-3">
+                    <button type="button" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i> Cancel
+                    </button>
+                    <div>
+                        <button type="reset" class="btn btn-light me-2">
+                            <i class="fas fa-redo me-1"></i> Reset
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                            <i class="fas fa-save me-1"></i> Submit Adjustment
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Recent Adjustments Section -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-history me-1"></i>
+                    Recent Adjustments
+                </h6>
+                <div>
+                    <button class="btn btn-sm btn-outline-secondary me-2">
+                        <i class="fas fa-download me-1"></i> Export
+                    </button>
+                    <a href="/inventory/history" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-clock-rotate-left me-1"></i> View All
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">Date/Time</th>
+                            <th>Product</th>
+                            <th>Category</th>
+                            <th>Variant</th>
+                            <th class="text-center">Type</th>
+                            <th class="text-end">Qty</th>
+                            <th class="text-end">New Qty</th>
+                            <th>Reason</th>
+                            <th class="text-end pe-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="ps-3">
+                                <div class="fw-bold">2023-06-20</div>
+                                <div class="text-muted small">14:30</div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="https://via.placeholder.com/40" width="40" height="40" class="rounded me-2" alt="Product">
+                                    <div>
+                                        <div class="fw-bold">Wireless Headphones</div>
+                                        <div class="text-muted small">ELEC-001</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>Electronics</td>
+                            <td>Black</td>
+                            <td class="text-center">
+                                <span class="badge bg-success bg-opacity-10 text-success px-2 py-1">
+                                    <i class="fas fa-plus-circle me-1"></i> Add
+                                </span>
+                            </td>
+                            <td class="text-end fw-bold text-success">+50</td>
+                            <td class="text-end fw-bold">124</td>
+                            <td>
+                                <div class="text-truncate" style="max-width: 150px;">
+                                    Restock from supplier
+                                </div>
+                            </td>
+                            <td class="text-end pe-3">
+                                <button class="btn btn-sm btn-outline-secondary" title="View details">
+                                    <i class="fas fa-eye">View</i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card-footer bg-white border-0">
+            <nav aria-label="Table navigation">
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1">Previous</a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+{% endif %}
+{% endblock %}

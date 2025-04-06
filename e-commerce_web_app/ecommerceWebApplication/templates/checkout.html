@@ -1,0 +1,105 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout</title>
+  <link rel="stylesheet" href="{% static 'assets/css/style.css' %}">
+  <script src="https://kit.fontawesome.com/bb515311f9.js" crossorigin="anonymous"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+  <div class="checkout-container">
+    <div class="checkout-content">
+      <div class="receipt-container">
+        <h2 class="receipt-heading">Receipt Summary</h2>
+        <ul class="item-list" id="items"></ul>
+        <div class="cart-total">
+          <p>Your Cart Total is <b>Rs. <span id="totalprice">0</span></b>. Please enter your details below to proceed with the order.</p>
+        </div>
+      </div>
+
+      <div class="payment-container">
+        <h3 class="payment-heading">Payment Information</h3>
+        <form action="{% url 'checkout' %}" method="post">
+          {% csrf_token %}
+          <input type="hidden" name="itemsJson" id="itemsJson">
+          <input type="hidden" name="amt" id="amt">
+          <div class="form-group">
+            <label for="name">Full Name</label>
+            <input id="name" name="name" placeholder="Satoshi Nakamoto" required type="text">
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input id="email" name="email" placeholder="example@mail.com" required type="email">
+          </div>
+
+          <div class="form-group">
+            <label for="address1">Address Line 1</label>
+            <input id="address1" name="address1" placeholder="123 Main St" required type="text">
+          </div>
+
+          <div class="form-group">
+            <label for="city">City</label>
+            <input id="city" name="city" placeholder="New York" required type="text">
+          </div>
+
+          <div class="form-group">
+            <label for="state">State</label>
+            <input id="state" name="state" placeholder="NY" required type="text">
+          </div>
+
+          <div class="form-group">
+            <label for="zip_code">ZIP Code</label>
+            <input id="zip_code" name="zip_code" placeholder="10001" required type="text">
+          </div>
+
+          <div class="form-group">
+            <label for="phone">Phone</label>
+            <input id="phone" name="phone" placeholder="123-456-7890" required type="text">
+          </div>
+
+          <button type="submit" class="btn">Proceed to Payment</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let cart = localStorage.getItem('cart') ? JSON.parse(localStorage.getItem('cart')) : {};
+    let totalPrice = 0;
+    
+    if ($.isEmptyObject(cart)) {
+      $('#items').append('<p>Your cart is empty, please add some items before checking out!</p>');
+    } else {
+      for (let item in cart) {
+        let name = cart[item][1];
+        let qty = cart[item][0];
+        let itemPrice = cart[item][2];
+        totalPrice += qty * itemPrice;
+
+        let itemHTML = `
+          <li class="item">
+            <span class="item-name">Name: ${name}</span>
+            <span class="item-price">Price: ${itemPrice} USD</span>
+            <span class="item-qty">Qty: ${qty}</span>
+          </li>
+        `;
+        $('#items').append(itemHTML);
+      }
+      $('#totalprice').text(totalPrice);
+    }
+
+    $('#itemsJson').val(JSON.stringify(cart));
+    $('#amt').val(totalPrice);
+
+    {% if thank %}
+      alert(`Thanks for ordering with us! Your order ID is {{id}}. Use it to track your order.`);
+      localStorage.removeItem('cart');
+      window.location.href = "/";
+    {% endif %}
+  </script>
+</body>
+</html>
