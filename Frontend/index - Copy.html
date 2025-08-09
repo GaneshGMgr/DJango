@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Search</title>
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: #1e1e1e;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #80cbc4;
+            text-decoration: none;
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .login-btn, .signup-btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .login-btn {
+            color: #e0e0e0;
+            border: 1px solid #444;
+            background-color: transparent;
+        }
+
+        .login-btn:hover {
+            background-color: #2d2d2d;
+        }
+
+        .signup-btn {
+            background-color: #00897b;
+            color: white;
+            border: 1px solid #00897b;
+        }
+
+        .signup-btn:hover {
+            background-color: #00796b;
+        }
+
+        /* Search Bar Styles */
+        .search-container {
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 15px 20px;
+            border: 1px solid #444;
+            border-radius: 8px;
+            font-size: 16px;
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .search-bar:focus {
+            outline: none;
+            border-color: #00897b;
+            box-shadow: 0 0 0 2px rgba(0, 137, 123, 0.3);
+        }
+
+        .search-bar::placeholder {
+            color: #9e9e9e;
+        }
+
+        /* Status Message Box */
+        .status-message {
+            background-color: #263238;
+            border-left: 4px solid #00897b;
+            padding: 10px 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-size: 14px;
+            display: none; /* Hidden by default */
+        }
+
+        .status-message.active {
+            display: block;
+        }
+
+        /* Loading Indicator */
+        .loading-container {
+            margin: 30px 0;
+            text-align: center;
+            display: none; /* Hidden by default */
+        }
+
+        .loading-container.active {
+            display: block;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto;
+            border: 4px solid #2d2d2d;
+            border-top: 4px solid #00897b;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 10px;
+            color: #80cbc4;
+            font-weight: 600;
+        }
+
+        /* Recommendations Section */
+        .recommendations-title {
+            font-size: 22px;
+            margin: 30px 0 20px;
+            color: #80cbc4;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+
+        .product-card {
+            background: #1e1e1e;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+            border: 1px solid #00897b;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 180px;
+            background-color: #2d2d2d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9e9e9e;
+        }
+
+        .product-info {
+            padding: 15px;
+        }
+
+        .product-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #e0e0e0;
+        }
+
+        .product-code {
+            color: #9e9e9e;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .product-price {
+            font-size: 18px;
+            font-weight: 600;
+            color: #80cbc4;
+            margin-bottom: 15px;
+        }
+
+        /* Feedback Component */
+        .feedback {
+            display: flex;
+            justify-content: flex-start;
+            gap: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #333;
+        }
+
+        .feedback-btn {
+            background: none;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            color: #e0e0e0;
+            gap: 6px;
+        }
+
+        .feedback-btn:hover {
+            background-color: #2d2d2d;
+        }
+
+        .feedback-btn.like:hover {
+            color: #81c784;
+            border-color: #81c784;
+        }
+
+        .feedback-btn.dislike:hover {
+            color: #e57373;
+            border-color: #e57373;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: #212121;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 22px;
+            cursor: pointer;
+            color: #9e9e9e;
+        }
+
+        .close-modal:hover {
+            color: #e0e0e0;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #80cbc4;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #e0e0e0;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            font-size: 16px;
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #00897b;
+            box-shadow: 0 0 0 2px rgba(0, 137, 123, 0.3);
+        }
+
+        .form-input::placeholder {
+            color: #9e9e9e;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #00897b;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background-color: #00796b;
+        }
+
+        .modal-footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #9e9e9e;
+        }
+
+        .modal-link {
+            color: #80cbc4;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .modal-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .product-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+            
+            .product-image {
+                height: 150px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .product-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .product-image {
+                height: 200px;
+            }
+            
+            .header-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .user-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .login-btn, .signup-btn {
+                width: 48%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-container">
+            <a href="#" class="logo">ShopSearch</a>
+            <div class="user-actions">
+                <a href="#" class="login-btn" onclick="document.getElementById('loginModal').classList.add('active')">Login</a>
+                <a href="#" class="signup-btn" onclick="document.getElementById('signupModal').classList.add('active')">Sign Up</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Search Bar -->
+        <div class="search-container">
+            <input type="text" class="search-bar" placeholder="Search for products (e.g., Show me wireless headphones)">
+        </div>
+
+        <!-- Agent Status Message -->
+        <div id="statusMessage" class="status-message">
+            Thinking... Please wait while we process your request.
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loadingIndicator" class="loading-container">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Fetching results...</p>
+        </div>
+
+        <!-- Recommendations Section -->
+        <h2 class="recommendations-title">Recommended Products</h2>
+        <div class="product-grid">
+            <!-- Product Card 1 -->
+            <div class="product-card">
+                <div class="product-image">Product Image</div>
+                <div class="product-info">
+                    <h3 class="product-name">Wireless Bluetooth Headphones</h3>
+                    <p class="product-code">SKU: WH-BT2023</p>
+                    <p class="product-price">$89.99</p>
+                    <div class="feedback">
+                        <button class="feedback-btn like">👍 Like</button>
+                        <button class="feedback-btn dislike">👎 Dislike</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Card 2 -->
+            <div class="product-card">
+                <div class="product-image">Product Image</div>
+                <div class="product-info">
+                    <h3 class="product-name">Noise Cancelling Earbuds</h3>
+                    <p class="product-code">SKU: NC-EB2023</p>
+                    <p class="product-price">$129.99</p>
+                    <div class="feedback">
+                        <button class="feedback-btn like">👍 Like</button>
+                        <button class="feedback-btn dislike">👎 Dislike</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Card 3 -->
+            <div class="product-card">
+                <div class="product-image">Product Image</div>
+                <div class="product-info">
+                    <h3 class="product-name">Gaming Headset with Mic</h3>
+                    <p class="product-code">SKU: GH-M2023</p>
+                    <p class="product-price">$149.99</p>
+                    <div class="feedback">
+                        <button class="feedback-btn like">👍 Like</button>
+                        <button class="feedback-btn dislike">👎 Dislike</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Card 4 -->
+            <div class="product-card">
+                <div class="product-image">Product Image</div>
+                <div class="product-info">
+                    <h3 class="product-name">Sports Wireless Earphones</h3>
+                    <p class="product-code">SKU: SW-E2023</p>
+                    <p class="product-price">$69.99</p>
+                    <div class="feedback">
+                        <button class="feedback-btn like">👍 Like</button>
+                        <button class="feedback-btn dislike">👎 Dislike</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="document.getElementById('loginModal').classList.remove('active')">&times;</span>
+            <h2 class="modal-title">Log In to Your Account</h2>
+            <form>
+                <div class="form-group">
+                    <label for="loginEmail" class="form-label">Email Address</label>
+                    <input type="email" id="loginEmail" class="form-input" placeholder="email@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword" class="form-label">Password</label>
+                    <input type="password" id="loginPassword" class="form-input" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="submit-btn">Log In</button>
+            </form>
+            <div class="modal-footer">
+                Don't have an account? <span class="modal-link" onclick="document.getElementById('loginModal').classList.remove('active'); document.getElementById('signupModal').classList.add('active')">Sign up</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Signup Modal -->
+    <div id="signupModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="document.getElementById('signupModal').classList.remove('active')">&times;</span>
+            <h2 class="modal-title">Create an Account</h2>
+            <form>
+                <div class="form-group">
+                    <label for="signupName" class="form-label">Full Name</label>
+                    <input type="text" id="signupName" class="form-input" placeholder="John Doe" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupEmail" class="form-label">Email Address</label>
+                    <input type="email" id="signupEmail" class="form-input" placeholder="email@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword" class="form-label">Password</label>
+                    <input type="password" id="signupPassword" class="form-input" placeholder="Create a password" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupConfirmPassword" class="form-label">Confirm Password</label>
+                    <input type="password" id="signupConfirmPassword" class="form-input" placeholder="Confirm your password" required>
+                </div>
+                <button type="submit" class="submit-btn">Sign Up</button>
+            </form>
+            <div class="modal-footer">
+                Already have an account? <span class="modal-link" onclick="document.getElementById('signupModal').classList.remove('active'); document.getElementById('loginModal').classList.add('active')">Log in</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Note: This HTML file includes "dummy" onclick handlers to demonstrate the UI appearance -->
+    <!-- In a real implementation, you would connect these to JavaScript functions -->
+</body>
+</html>
